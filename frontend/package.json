@@ -1,0 +1,17 @@
+{
+  "name": "freelancepay-frontend",
+  "version": "0.1.0",
+  "description": "FreelancePay DAO Community Treasury Frontend",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "echo 'Development server'",
+    "build": "echo 'Build frontend'",
+    "test": "echo 'Run tests'"
+  },
+  "keywords": ["dao", "governance", "treasury"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
