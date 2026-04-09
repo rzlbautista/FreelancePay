@@ -249,7 +249,8 @@
 </footer>
 
 <script type="module">
-import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
+import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12/+esm';
+import { SorobanRpc } from 'https://esm.sh/@stellar/stellar-sdk@12/+esm';
 
 // window.freighterApi is loaded via the cdnjs <script> tag in <head>
 
@@ -261,7 +262,7 @@ const EXPLORER_TX  = 'https://stellar.expert/explorer/testnet/tx/';
 const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
 
 let publicKey = null;
-const server = new StellarSdk.SorobanRpc.Server(RPC_URL);
+const server = new SorobanRpc.Server(RPC_URL);
 
 // ── Connect Wallet (official @stellar/freighter-api via window.freighterApi) ──
 async function connectWallet() {
@@ -528,7 +529,7 @@ async function callGetEscrow() {
       .addOperation(contract.call('get_escrow'))
       .setTimeout(30).build();
     const sim = await server.simulateTransaction(tx);
-    if (StellarSdk.SorobanRpc.isSimulationError(sim)) { renderEscrowEmpty(); return; }
+    if (SorobanRpc.isSimulationError(sim)) { renderEscrowEmpty(); return; }
     const retval = sim.result?.retval;
     if (!retval) { renderEscrowEmpty(); return; }
     renderEscrow(StellarSdk.scValToNative(retval));
