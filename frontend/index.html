@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FreelancePay — Trustless Escrow on Stellar</title>
+  <!-- Official Freighter API via cdnjs (exposes window.freighterApi) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-freighter-api/6.0.1/index.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -248,14 +250,8 @@
 
 <script type="module">
 import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
-import {
-  isConnected,
-  isAllowed,
-  setAllowed,
-  getAddress,
-  getNetworkDetails,
-  signTransaction,
-} from 'https://esm.sh/@stellar/freighter-api@5';
+
+// window.freighterApi is loaded via the cdnjs <script> tag in <head>
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CONTRACT_ID  = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
@@ -267,7 +263,7 @@ const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
 let publicKey = null;
 const server = new StellarSdk.SorobanRpc.Server(RPC_URL);
 
-// ── Connect Wallet (official @stellar/freighter-api) ─────────────────────────
+// ── Connect Wallet (official @stellar/freighter-api via window.freighterApi) ──
 async function connectWallet() {
   const btn   = document.getElementById('connect-btn');
   const errEl = document.getElementById('connect-error');
@@ -277,22 +273,28 @@ async function connectWallet() {
   errEl.style.display = 'none';
 
   try {
-    // 1. Check extension is installed
-    const connResult = await isConnected();
-    if (!connResult?.isConnected) {
+    const api = window.freighterApi;
+    if (!api) {
       showError(errEl, 'Freighter not found. Install it from freighter.app, enable it for this site, then refresh.');
       return;
     }
 
+    // 1. Check extension is installed
+    const connResult = await api.isConnected();
+    if (!connResult?.isConnected) {
+      showError(errEl, 'Freighter extension is not active. Click the Freighter icon in your toolbar and unlock it.');
+      return;
+    }
+
     // 2. Request site permission (triggers the Freighter popup)
-    const allowResult = await setAllowed();
+    const allowResult = await api.setAllowed();
     if (!allowResult?.isAllowed) {
       showError(errEl, 'Access denied. Click the Freighter icon in your toolbar and grant access to this site.');
       return;
     }
 
     // 3. Get public key
-    const addrResult = await getAddress();
+    const addrResult = await api.getAddress();
     if (addrResult?.error) {
       showError(errEl, 'Could not get address: ' + addrResult.error);
       return;
@@ -304,7 +306,7 @@ async function connectWallet() {
     }
 
     // 4. Verify testnet
-    const net = await getNetworkDetails();
+    const net = await api.getNetworkDetails();
     if (net?.networkPassphrase && !net.networkPassphrase.includes('Test SDF')) {
       showError(errEl, 'Wrong network! Open Freighter → click the network name → select Testnet.');
       return;
@@ -379,8 +381,8 @@ async function signAndSend(tx) {
   const prepared = await server.prepareTransaction(tx);
   const xdr = prepared.toXDR();
 
-  // Uses official @stellar/freighter-api signTransaction
-  const result = await signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+  // Uses window.freighterApi loaded via cdnjs script tag
+  const result = await window.freighterApi.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
   const signedXdr = result?.signedTxXdr ?? result;
 
   const signed = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASS);
