@@ -749,7 +749,7 @@
   </p>
   <div class="hero-cta">
     <a href="#app" class="btn btn-primary btn-lg">Launch App →</a>
-    <a href="https://stellar.expert/explorer/testnet/contract/CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2"
+    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6"
        target="_blank" class="btn btn-ghost btn-lg">View Contract ↗</a>
   </div>
 </section>
@@ -1017,20 +1017,20 @@
 <footer>
   <p style="margin-bottom:0.5rem;">
     <strong>FreelancePay</strong> — Trustless Escrow on Stellar &nbsp;·&nbsp;
-    <a href="https://stellar.expert/explorer/testnet/contract/CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2"
+    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6"
        target="_blank">View Contract on Stellar Expert ↗</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/rzlbautista/FreelancePay" target="_blank">GitHub ↗</a>
   </p>
   <p style="color:var(--muted);font-size:0.75rem;">
     Built for the Stellar Bootcamp Hackathon · Contract:
-    <code style="color:var(--muted2);">CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2</code>
+    <code style="color:var(--muted2);">CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6</code>
   </p>
 </footer>
 
 <!-- ── SCRIPT ─────────────────────────────────────────────────────────────── -->
 <script type="module">
-const CONTRACT_ID  = 'CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2';
+const CONTRACT_ID  = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
 const RPC_URL      = 'https://soroban-testnet.stellar.org';
 const NETWORK_PASS = 'Test SDF Network ; September 2015';
 const EXPLORER_TX  = 'https://stellar.expert/explorer/testnet/tx/';
@@ -1076,8 +1076,7 @@ window.connectWallet = async function () {
     if (typeof freighter.requestAccess === 'function') {
       console.log('[FreelancePay] calling freighter.requestAccess()');
       const result = await freighter.requestAccess();
-      const err = result?.error ?? result;
-      if (err) {
+      if (result?.error) {
         showConnectError('Freighter access denied. Click the Freighter icon in your toolbar and grant access to this site.');
         return;
       }
@@ -1087,10 +1086,12 @@ window.connectWallet = async function () {
 
     // --- Step 2: getPublicKey ---
     console.log('[FreelancePay] calling freighter.getPublicKey()');
-    const pk = await freighter.getPublicKey();
-    console.log('[FreelancePay] getPublicKey result:', pk);
+    const pkResult = await freighter.getPublicKey();
+    console.log('[FreelancePay] getPublicKey result:', pkResult);
 
-    if (!pk || pk.length < 50) {
+    const pk = pkResult?.address ?? pkResult;
+
+    if (!pk || typeof pk !== 'string' || pk.length < 50) {
       showConnectError('Freighter returned no address. Make sure your wallet is unlocked and try again.');
       return;
     }
