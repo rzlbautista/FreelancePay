@@ -735,95 +735,7 @@
   </div>
 </header>
 
-<!-- ── ERROR BANNER ──────────────────────────────────────────────────────────── -->
-<div id="banner" style="display:none;position:fixed;top:64px;left:0;right:0;z-index:300;
-  padding:12px 2rem;font-size:0.88rem;font-weight:500;text-align:center;
-  background:rgba(248,113,113,0.12);border-bottom:1px solid rgba(248,113,113,0.3);
-  color:#fca5a5;backdrop-filter:blur(8px);">
-  <span id="banner-msg"></span>
-  <a id="banner-link" href="#" target="_blank" style="color:#f87171;margin-left:8px;font-weight:700;display:none;">→ Fix it</a>
-  <button onclick="hideBanner()" style="float:right;background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;">✕</button>
-</div>
-
-<!-- ── CONNECT OVERLAY ─────────────────────────────────────────────────────── -->
-<div id="connect-overlay">
-  <div class="connect-box" style="position:relative;max-width:460px;">
-
-    <!-- Close -->
-    <button onclick="document.getElementById('connect-overlay').style.display='none'"
-      title="Browse the site first"
-      style="position:absolute;top:14px;right:14px;background:none;border:none;
-             color:var(--muted);font-size:1.3rem;cursor:pointer;padding:4px 8px;
-             border-radius:6px;transition:color 0.15s;line-height:1;"
-      onmouseover="this.style.color='var(--text)'"
-      onmouseout="this.style.color='var(--muted)'">✕</button>
-
-    <div class="connect-icon">🚀</div>
-    <h2 style="margin-bottom:0.4rem;">Get started in 3 steps</h2>
-    <p style="color:var(--muted2);font-size:0.88rem;margin-bottom:1.6rem;">
-      You need a Freighter wallet with testnet XLM to use FreelancePay.
-    </p>
-
-    <!-- Step 1 -->
-    <div class="setup-step" id="step1-box">
-      <div class="setup-num" id="step1-num">1</div>
-      <div style="flex:1;">
-        <div class="setup-title">Install Freighter Wallet</div>
-        <div class="setup-desc" id="step1-desc">Free browser extension for Chrome, Brave &amp; Firefox.</div>
-      </div>
-      <a href="https://www.freighter.app/" target="_blank"
-         id="step1-btn"
-         class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem;flex-shrink:0;">
-        Install →
-      </a>
-    </div>
-
-    <!-- Step 2 -->
-    <div class="setup-step" id="step2-box" style="opacity:0.45;">
-      <div class="setup-num" id="step2-num">2</div>
-      <div style="flex:1;">
-        <div class="setup-title">Switch to Testnet</div>
-        <div class="setup-desc">In Freighter: Settings → Network → <strong style="color:var(--yellow);">Testnet</strong></div>
-      </div>
-      <span id="step2-status" style="font-size:1.1rem;flex-shrink:0;">○</span>
-    </div>
-
-    <!-- Step 3 -->
-    <div class="setup-step" id="step3-box" style="opacity:0.45;">
-      <div class="setup-num" id="step3-num">3</div>
-      <div style="flex:1;">
-        <div class="setup-title">Connect &amp; Fund Wallet</div>
-        <div class="setup-desc" id="step3-desc">Click below — Freighter will ask you to approve.</div>
-      </div>
-    </div>
-
-    <!-- Error message -->
-    <div id="setup-error" style="display:none;background:rgba(248,113,113,0.1);
-      border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:10px 14px;
-      font-size:0.82rem;color:#fca5a5;margin-top:0.8rem;line-height:1.5;"></div>
-
-    <!-- Main action button -->
-    <button class="btn btn-primary btn-lg" id="overlay-main-btn"
-      style="width:100%;margin-top:1.2rem;" onclick="overlayAction()">
-      Connect Freighter
-    </button>
-
-    <!-- Fund button (hidden until connected) -->
-    <button class="btn btn-success" id="fund-btn"
-      style="width:100%;margin-top:0.6rem;display:none;" onclick="fundWallet()">
-      💧 Fund with Friendbot (free testnet XLM)
-    </button>
-
-    <p style="margin-top:0.8rem;font-size:0.75rem;color:var(--muted);text-align:center;">
-      Already set up?
-      <button onclick="document.getElementById('connect-overlay').style.display='none'"
-        style="background:none;border:none;color:var(--accent2);cursor:pointer;
-               font-size:0.75rem;font-family:inherit;padding:0;">
-        Skip and browse →
-      </button>
-    </p>
-  </div>
-</div>
+<!-- no overlay -->
 
 <!-- ── HERO ────────────────────────────────────────────────────────────────── -->
 <section class="hero">
@@ -922,10 +834,60 @@
 <section id="app">
   <div style="max-width:980px;margin:0 auto;padding:3rem 2rem 5rem;">
     <h2 class="section-title" style="margin-bottom:0.4rem;">Launch App</h2>
-    <p class="section-sub">Connect your wallet to create or manage an escrow.</p>
+    <p class="section-sub">Connect your Freighter wallet, then create or manage an escrow below.</p>
 
-    <!-- Status Tracker -->
-    <div style="max-width:500px;margin:0 auto 2.5rem;">
+    <!-- ── WALLET WIDGET (always visible, no blocking modal) ── -->
+    <div id="wallet-widget" class="card full" style="margin-bottom:1.5rem;">
+
+      <!-- NOT CONNECTED -->
+      <div id="w-disconnected">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:220px;">
+            <div style="font-weight:700;margin-bottom:4px;">🔐 Connect your Freighter wallet</div>
+            <div style="font-size:0.82rem;color:var(--muted2);">
+              Make sure Freighter is installed and set to <strong style="color:var(--yellow);">Testnet</strong>.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="https://www.freighter.app/" target="_blank"
+               class="btn btn-ghost" style="font-size:0.85rem;">
+              Install Freighter ↗
+            </a>
+            <button class="btn btn-primary" id="connect-btn" onclick="connectWallet()">
+              Connect Wallet
+            </button>
+          </div>
+        </div>
+        <!-- inline error -->
+        <div id="connect-error" style="display:none;margin-top:0.8rem;padding:10px 14px;
+          background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);
+          border-radius:8px;font-size:0.83rem;color:#fca5a5;line-height:1.5;"></div>
+      </div>
+
+      <!-- CONNECTED -->
+      <div id="w-connected" style="display:none;">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;">
+            <div class="dot-green"></div>
+            <div>
+              <div style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Connected</div>
+              <div id="w-addr" style="font-family:monospace;font-size:0.85rem;color:var(--text);"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-success" style="font-size:0.85rem;" onclick="fundWallet()" id="fund-btn">
+              💧 Get Free Testnet XLM
+            </button>
+          </div>
+        </div>
+        <div id="fund-msg" style="display:none;margin-top:0.7rem;padding:8px 14px;
+          border-radius:8px;font-size:0.82rem;line-height:1.5;"></div>
+      </div>
+
+    </div>
+
+    <!-- ── STATUS TRACKER ── -->
+    <div style="max-width:500px;margin:0 auto 2rem;">
       <div class="tracker" id="tracker">
         <div class="tracker-step">
           <div class="tracker-dot" id="t1">1</div>
@@ -958,19 +920,19 @@
         </div>
 
         <div class="field">
-          <label>Your Address (Client)</label>
-          <input id="client-addr" type="text" readonly placeholder="Connect wallet…" />
+          <label>Your Address (Client) — auto-filled on connect</label>
+          <input id="client-addr" type="text" readonly placeholder="Connect wallet above first…" />
         </div>
         <div class="field">
           <label>Freelancer Address</label>
-          <input id="freelancer-addr" type="text" placeholder="G… (recipient)" />
+          <input id="freelancer-addr" type="text" placeholder="G… (who receives payment)" />
         </div>
         <div class="field">
-          <label>Arbitrator Address <span style="color:var(--muted);font-weight:400;">(dispute resolver)</span></label>
-          <input id="arbitrator-addr" type="text" placeholder="G… (neutral party)" />
+          <label>Arbitrator Address <span style="color:var(--muted);font-weight:400;">(resolves disputes)</span></label>
+          <input id="arbitrator-addr" type="text" placeholder="G… (neutral third party)" />
         </div>
         <div class="field">
-          <label>Token Contract <span style="color:var(--muted);font-weight:400;">(XLM SAC default)</span></label>
+          <label>Token Contract <span style="color:var(--muted);font-weight:400;">(XLM by default)</span></label>
           <input id="token-addr" type="text"
             value="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" />
         </div>
@@ -1010,15 +972,14 @@
             ✅ Release Funds
           </button>
           <button class="btn btn-danger" id="cancel-btn" onclick="callCancel()">
-            ↩ Cancel & Refund
+            ↩ Cancel &amp; Refund
           </button>
         </div>
 
-        <!-- Dispute Panel -->
         <div class="dispute-panel">
           <div class="dispute-title">⚖️ Dispute Resolution</div>
           <p style="font-size:0.8rem;color:var(--muted2);margin-bottom:0.8rem;line-height:1.5;">
-            If client and freelancer can't agree, the arbitrator resolves the dispute.
+            If client and freelancer can't agree, the arbitrator resolves it.
           </p>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-orange" style="flex:1;font-size:0.82rem;"
@@ -1043,7 +1004,7 @@
         <ul id="log">
           <li class="log-entry info">
             <div class="log-time">Ready</div>
-            <div class="log-msg">Connect your Freighter wallet to begin. Make sure it is set to Testnet.</div>
+            <div class="log-msg">Click "Connect Wallet" above. Freighter will ask you to approve — click Approve in the popup.</div>
           </li>
         </ul>
       </div>
@@ -1074,140 +1035,125 @@ const RPC_URL      = 'https://soroban-testnet.stellar.org';
 const NETWORK_PASS = 'Test SDF Network ; September 2015';
 const EXPLORER_TX  = 'https://stellar.expert/explorer/testnet/tx/';
 const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
+// Fallback public account used for read-only simulations before wallet connect
+const DUMMY_ADDR   = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
 
 import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
 
 let publicKey = null;
 const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
 
-// ── Detect Freighter on load ────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  setTimeout(checkFreighter, 800); // wait for extension to inject
-});
+// ── Connect Wallet ───────────────────────────────────────────────────────────
+window.connectWallet = async function () {
+  const btn = document.getElementById('connect-btn');
+  const hdr = document.getElementById('header-connect-btn');
+  const err = document.getElementById('connect-error');
 
-function checkFreighter() {
-  if (window.freighter) {
-    markStepDone(1);
-    document.getElementById('step1-desc').textContent = '✓ Freighter is installed';
-    document.getElementById('step2-box').style.opacity = '1';
-    document.getElementById('step3-box').style.opacity = '0.6';
-  }
-}
-
-// ── Setup overlay logic ──────────────────────────────────────────────────────
-// overlayAction is called by the main "Connect Freighter" button in the overlay
-window.overlayAction = async function () {
-  setOverlayError('');
-
-  // Not installed yet?
-  if (!window.freighter) {
-    setOverlayError('Freighter extension not detected. Install it from freighter.app, then refresh this page.');
-    window.open('https://www.freighter.app/', '_blank');
-    return;
-  }
-
-  await doConnect();
-};
-
-// ── Connect ──────────────────────────────────────────────────────────────────
-window.connectWallet = async function () { await doConnect(); };
-
-async function doConnect() {
-  const mainBtn   = document.getElementById('overlay-main-btn');
-  const headerBtn = document.getElementById('header-connect-btn');
-
-  setBtnLoading(mainBtn, 'Connecting…');
-  setBtnLoading(headerBtn, 'Connecting…');
-  setOverlayError('');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Connecting…';
+  err.style.display = 'none';
 
   try {
+    // Check Freighter extension is injected
     if (!window.freighter) {
-      setOverlayError('Freighter not found. Install the browser extension and refresh.');
+      showConnectError('Freighter extension not found. Install it at freighter.app, then refresh this page.');
       return;
     }
 
-    // Get public key — this triggers the Freighter approval popup
+    // getPublicKey() opens the Freighter popup — user clicks Approve inside it
     const pk = await window.freighter.getPublicKey();
+
     if (!pk || pk.length < 50) {
-      setOverlayError('Could not read address. Make sure Freighter is unlocked and try again.');
+      showConnectError('No address returned. Make sure your Freighter wallet is unlocked.');
       return;
     }
 
-    // Check network
-    let passphrase = '';
+    // Verify network is testnet
     try {
-      const details = await window.freighter.getNetworkDetails();
-      passphrase = details?.networkPassphrase ?? details?.network ?? '';
-    } catch (_) {}
+      const net = await window.freighter.getNetworkDetails();
+      const pass = net?.networkPassphrase ?? '';
+      if (pass && !pass.includes('Test SDF')) {
+        showConnectError('Wrong network detected. In Freighter: tap the network name at top → choose Testnet.');
+        return;
+      }
+    } catch (_) { /* network check optional */ }
 
-    if (passphrase && !passphrase.includes('Test SDF')) {
-      setOverlayError('Wrong network! In Freighter: click the network name at the top → select "Test SDF Network; September 2015" (Testnet).');
-      return;
-    }
-
-    // Connected!
+    // ✅ Success
     publicKey = pk;
-    document.getElementById('client-addr').value = publicKey;
-    document.getElementById('wallet-addr-display').textContent =
-      publicKey.slice(0,6) + '…' + publicKey.slice(-4);
-    document.getElementById('wallet-chip').style.display = 'flex';
-    headerBtn.textContent = 'Connected';
-    headerBtn.disabled = true;
-    hideBanner();
+    document.getElementById('client-addr').value = pk;
 
-    markStepDone(1);
-    markStepDone(2);
-    markStepDone(3);
-    document.getElementById('step3-desc').textContent = '✓ Connected: ' + publicKey.slice(0,8) + '…';
-    document.getElementById('fund-btn').style.display = 'block';
-    mainBtn.style.display = 'none';
+    // Header chip
+    document.getElementById('wallet-addr-display').textContent = pk.slice(0,6) + '…' + pk.slice(-4);
+    document.getElementById('wallet-chip').style.display = 'flex';
+    hdr.textContent = 'Connected ✓';
+    hdr.disabled = true;
+
+    // Swap wallet widget state
+    document.getElementById('w-disconnected').style.display = 'none';
+    document.getElementById('w-addr').textContent = pk.slice(0,8) + '…' + pk.slice(-6);
+    document.getElementById('w-connected').style.display = 'block';
 
     setTracker(1);
-    log('success', 'Wallet connected: ' + publicKey);
+    log('success', 'Wallet connected: ' + pk);
 
   } catch (e) {
-    const msg = e?.message ?? String(e);
-    if (msg.toLowerCase().includes('user declined') || msg.toLowerCase().includes('rejected')) {
-      setOverlayError('You declined the connection request in Freighter. Click "Connect" in the popup to approve.');
+    const msg = String(e?.message ?? e);
+    if (/declin|reject|cancel/i.test(msg)) {
+      showConnectError('You dismissed the Freighter popup. Click "Connect Wallet" again and then click Approve in the popup.');
     } else {
-      setOverlayError('Error: ' + msg);
+      showConnectError('Error: ' + msg);
     }
   } finally {
-    setBtnNormal(mainBtn, 'Connect Freighter');
-    setBtnNormal(headerBtn, 'Connect Wallet');
+    btn.disabled = false;
+    btn.textContent = 'Connect Wallet';
     if (publicKey) {
-      headerBtn.textContent = 'Connected';
-      headerBtn.disabled = true;
+      btn.textContent = 'Connected ✓';
+      btn.disabled = true;
     }
   }
+};
+
+function showConnectError(msg) {
+  const el = document.getElementById('connect-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  log('error', msg);
 }
 
-// ── Friendbot funding ────────────────────────────────────────────────────────
+// ── Friendbot ────────────────────────────────────────────────────────────────
 window.fundWallet = async function () {
+  if (!publicKey) return;
   const btn = document.getElementById('fund-btn');
-  setBtnLoading(btn, 'Funding…');
+  const msg = document.getElementById('fund-msg');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Requesting XLM…';
+  msg.style.display = 'none';
 
   try {
-    const res = await fetch(FRIENDBOT + publicKey);
+    const res  = await fetch(FRIENDBOT + publicKey);
+    const body = await res.json().catch(() => ({}));
+
     if (res.ok) {
-      btn.innerHTML = '✅ Funded! You have testnet XLM.';
-      btn.disabled = true;
-      document.getElementById('connect-overlay').style.display = 'none';
-      log('success', 'Wallet funded with testnet XLM via Friendbot!');
+      btn.innerHTML = '✅ Funded! 10,000 XLM added.';
+      msg.style.cssText = 'display:block;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#6ee7b7;margin-top:0.5rem;';
+      msg.textContent = '10,000 testnet XLM added to your wallet. You can now create escrows!';
+      log('success', 'Wallet funded with 10,000 testnet XLM!');
+    } else if (res.status === 400 || String(body?.detail).includes('already')) {
+      btn.innerHTML = '✅ Already funded!';
+      msg.style.cssText = 'display:block;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#6ee7b7;margin-top:0.5rem;';
+      msg.textContent = 'Your wallet already has testnet XLM. You are ready to go!';
     } else {
-      const body = await res.json().catch(() => ({}));
-      if (body?.detail?.includes('already') || res.status === 400) {
-        btn.innerHTML = '✅ Already funded!';
-        btn.disabled = true;
-        setTimeout(() => { document.getElementById('connect-overlay').style.display = 'none'; }, 1000);
-      } else {
-        setOverlayError('Friendbot error: ' + (body?.detail ?? res.status));
-        setBtnNormal(btn, '💧 Fund with Friendbot (free testnet XLM)');
-      }
+      btn.disabled = false;
+      btn.textContent = '💧 Get Free Testnet XLM (retry)';
+      msg.style.cssText = 'display:block;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#fca5a5;margin-top:0.5rem;';
+      msg.textContent = 'Friendbot error: ' + (body?.detail ?? res.status) + '. Try again.';
     }
   } catch (e) {
-    setOverlayError('Could not reach Friendbot. You may already have XLM, or try again.');
-    setBtnNormal(btn, '💧 Fund with Friendbot (retry)');
+    btn.disabled = false;
+    btn.textContent = '💧 Get Free Testnet XLM (retry)';
+    msg.style.cssText = 'display:block;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#fca5a5;margin-top:0.5rem;';
+    msg.textContent = 'Could not reach Friendbot. Check your internet connection and try again.';
   }
 };
 
@@ -1439,46 +1385,7 @@ function u64(n)    { return StellarSdk.nativeToScVal(n, { type: 'u64' }); }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── Banner ───────────────────────────────────────────────────────────────────
-window.showBanner = function(type, msg) {
-  const el = document.getElementById('banner');
-  document.getElementById('banner-msg').textContent = msg;
-  el.style.background = type === 'error' ? 'rgba(248,113,113,0.12)' : 'rgba(52,211,153,0.1)';
-  el.style.color = type === 'error' ? '#fca5a5' : '#6ee7b7';
-  el.style.display = 'block';
-  log(type, msg);
-};
-
-window.hideBanner = function() {
-  document.getElementById('banner').style.display = 'none';
-};
-
-// ── Overlay helpers ──────────────────────────────────────────────────────────
-function setOverlayError(msg) {
-  const el = document.getElementById('setup-error');
-  if (msg) { el.textContent = msg; el.style.display = 'block'; }
-  else      { el.style.display = 'none'; }
-}
-
-function markStepDone(n) {
-  const num = document.getElementById('step' + n + '-num');
-  if (num) { num.textContent = '✓'; num.classList.add('done'); }
-  const box = document.getElementById('step' + n + '-box');
-  if (box) box.style.opacity = '1';
-}
-
-// ── Button state helpers ─────────────────────────────────────────────────────
-function setBtnLoading(btn, label) {
-  if (!btn) return;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> ' + label;
-}
-
-function setBtnNormal(btn, label) {
-  if (!btn || btn.disabled === true && btn.textContent === 'Connected') return;
-  btn.disabled = false;
-  btn.textContent = label;
-};
+window.hideBanner = function() {}; // no-op, kept for safety
 </script>
 </body>
 </html>
