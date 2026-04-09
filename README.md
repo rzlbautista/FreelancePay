@@ -192,13 +192,19 @@ Open `frontend/index.html` directly in any browser with Freighter installed.
 
 ## Submission Checklist
 
-- [ ] `cargo test` passes (6/6 tests)
-- [ ] WASM built: `target/wasm32-unknown-unknown/release/freelancepay.wasm`
-- [ ] Contract deployed to Stellar Testnet
-- [ ] `CONTRACT_ID` updated in `frontend/index.html`
-- [ ] Deposit → Release flow tested end-to-end in browser
-- [ ] GitHub repo pushed: `https://github.com/rzlbautista/FreelancePay`
-- [ ] Stellar Expert link confirmed: `https://stellar.expert/explorer/testnet/contract/CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2`
+- [x] `cargo test` passes (9/9 tests)
+- [x] WASM built: `target/wasm32-unknown-unknown/release/freelancepay.wasm`
+- [x] Contract deployed to Stellar Testnet
+- [x] GitHub repo pushed: `https://github.com/rzlbautista/FreelancePay`
+- [x] Stellar Expert link: `https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6`
+
+## Contract ID
+
+```
+CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6
+```
+
+**Stellar Expert:** https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6
 
 ---
 
