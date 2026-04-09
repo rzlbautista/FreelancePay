@@ -709,7 +709,13 @@
 
 <!-- ── CONNECT OVERLAY ─────────────────────────────────────────────────────── -->
 <div id="connect-overlay">
-  <div class="connect-box">
+  <div class="connect-box" style="position:relative;">
+    <button onclick="document.getElementById('connect-overlay').style.display='none'"
+      style="position:absolute;top:14px;right:14px;background:none;border:none;
+             color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;
+             padding:4px 8px;border-radius:6px;transition:color 0.15s;"
+      onmouseover="this.style.color='var(--text)'"
+      onmouseout="this.style.color='var(--muted)'">✕</button>
     <div class="connect-icon">🔐</div>
     <h2>Connect Your Wallet</h2>
     <p>FreelancePay uses Freighter to sign Stellar transactions. Make sure Freighter is set to <strong>Testnet</strong>.</p>
