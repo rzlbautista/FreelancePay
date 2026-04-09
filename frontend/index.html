@@ -1059,7 +1059,9 @@ window.connectWallet = async function () {
     // Wait up to 3 s for extension to inject (page may have just loaded)
     await waitForFreighter(3000);
 
-    if (!window.freighter) {
+    const freighter = window.freighterApi ?? window.freighter;
+
+    if (!freighter) {
       showConnectError(
         'Freighter extension not detected. ' +
         'Make sure it is installed and ENABLED for this site, then refresh the page.'
@@ -1067,14 +1069,14 @@ window.connectWallet = async function () {
       return;
     }
 
-    console.log('[FreelancePay] window.freighter detected:', Object.keys(window.freighter));
+    console.log('[FreelancePay] freighter detected:', Object.keys(freighter));
 
     // --- Step 1: requestAccess ---
-    // Newer Freighter versions expose requestAccess() on window.freighter.
     // This is the call that triggers the "Grant Access" popup.
-    if (typeof window.freighter.requestAccess === 'function') {
-      console.log('[FreelancePay] calling window.freighter.requestAccess()');
-      const err = await window.freighter.requestAccess();
+    if (typeof freighter.requestAccess === 'function') {
+      console.log('[FreelancePay] calling freighter.requestAccess()');
+      const result = await freighter.requestAccess();
+      const err = result?.error ?? result;
       if (err) {
         showConnectError('Freighter access denied. Click the Freighter icon in your toolbar and grant access to this site.');
         return;
@@ -1084,8 +1086,8 @@ window.connectWallet = async function () {
     }
 
     // --- Step 2: getPublicKey ---
-    console.log('[FreelancePay] calling window.freighter.getPublicKey()');
-    const pk = await window.freighter.getPublicKey();
+    console.log('[FreelancePay] calling freighter.getPublicKey()');
+    const pk = await freighter.getPublicKey();
     console.log('[FreelancePay] getPublicKey result:', pk);
 
     if (!pk || pk.length < 50) {
@@ -1095,7 +1097,7 @@ window.connectWallet = async function () {
 
     // --- Step 3: verify Testnet ---
     try {
-      const net = await window.freighter.getNetworkDetails();
+      const net = await freighter.getNetworkDetails();
       console.log('[FreelancePay] network:', net);
       const pass = net?.networkPassphrase ?? '';
       if (pass && !pass.includes('Test SDF')) {
@@ -1144,13 +1146,14 @@ function applyConnectedState(pk) {
 
 async function waitForFreighter(timeout) {
   const end = Date.now() + timeout;
-  while (!window.freighter && Date.now() < end) {
+  while (!window.freighterApi && !window.freighter && Date.now() < end) {
     await new Promise(r => setTimeout(r, 150));
   }
 }
 
 async function signTx(xdr) {
-  return window.freighter.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+  const freighter = window.freighterApi ?? window.freighter;
+  return freighter.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
 }
 
 function showConnectError(msg) {
