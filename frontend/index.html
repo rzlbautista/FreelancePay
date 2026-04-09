@@ -1030,6 +1030,8 @@
 
 <!-- ── SCRIPT ─────────────────────────────────────────────────────────────── -->
 <script type="module">
+import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
+
 const CONTRACT_ID  = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
 const RPC_URL      = 'https://soroban-testnet.stellar.org';
 const NETWORK_PASS = 'Test SDF Network ; September 2015';
@@ -1037,8 +1039,6 @@ const EXPLORER_TX  = 'https://stellar.expert/explorer/testnet/tx/';
 const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
 // Fallback public account used for read-only simulations before wallet connect
 const DUMMY_ADDR   = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
-
-import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
 
 let publicKey = null;
 const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
