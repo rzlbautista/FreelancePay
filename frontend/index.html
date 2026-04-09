@@ -1076,8 +1076,7 @@ window.connectWallet = async function () {
     if (typeof freighter.requestAccess === 'function') {
       console.log('[FreelancePay] calling freighter.requestAccess()');
       const result = await freighter.requestAccess();
-      const err = result?.error ?? result;
-      if (err) {
+      if (result?.error) {
         showConnectError('Freighter access denied. Click the Freighter icon in your toolbar and grant access to this site.');
         return;
       }
