@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FreelancePay — Trustless Escrow on Stellar</title>
-  <!-- Official Freighter API via cdnjs (exposes window.freighterApi) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-freighter-api/6.0.1/index.min.js"></script>
+  <!-- Official Freighter API via unpkg (exposes window.freighterApi) -->
+  <script src="https://unpkg.com/@stellar/freighter-api/dist/index.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -279,8 +279,6 @@ async function connectWallet() {
       showError(errEl, 'Freighter not found. Install it from freighter.app, enable it for this site, then refresh.');
       return;
     }
-
-    // 1. Check extension is installed
     const connResult = await api.isConnected();
     if (!connResult?.isConnected) {
       showError(errEl, 'Freighter extension is not active. Click the Freighter icon in your toolbar and unlock it.');
