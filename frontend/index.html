@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreelancePay — Stellar Escrow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --card: #1c2030;
+      --border: #2a3048;
+      --accent: #7c6df4;
+      --accent-hover: #9585f8;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 12px;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .network-badge {
+      background: rgba(251, 191, 36, 0.12);
+      color: var(--yellow);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .wallet-info {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .wallet-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .wallet-addr { font-family: monospace; font-size: 0.82rem; color: var(--muted); }
+
+    /* ── Buttons ──────────────────────────────────── */
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+
+    .btn-success {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+    .btn-success:hover:not(:disabled) { background: rgba(52, 211, 153, 0.25); }
+
+    .btn-danger {
+      background: rgba(248, 113, 113, 0.12);
+      color: var(--red);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    .btn-danger:hover:not(:disabled) { background: rgba(248, 113, 113, 0.22); }
+
+    .btn-ghost {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Layout ──────────────────────────────────── */
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── Cards ──────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+
+    /* ── Forms ──────────────────────────────────── */
+    .field { margin-bottom: 1rem; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-family: var(--font);
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input::placeholder { color: #4a5568; }
+
+    /* ── Connect Wallet screen ──────────────────── */
+    #connect-screen {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+
+    .hero-icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, rgba(124,109,244,0.2), rgba(167,139,250,0.2));
+      border: 1px solid rgba(124,109,244,0.4);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      margin-bottom: 1.5rem;
+    }
+
+    #connect-screen h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.6rem; }
+    #connect-screen p { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; max-width: 400px; }
+
+    #app-content { display: none; }
+    #app-content.visible { display: contents; }
+
+    /* ── Escrow state display ──────────────────── */
+    .escrow-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+
+    .escrow-row:last-child { border-bottom: none; }
+    .escrow-label { color: var(--muted); min-width: 80px; }
+    .escrow-value { font-family: monospace; font-size: 0.8rem; word-break: break-all; text-align: right; max-width: 65%; }
+    .escrow-amount { color: var(--green); font-size: 1rem; font-weight: 700; font-family: inherit; }
+
+    /* ── Log ──────────────────────────────────── */
+    #log { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+    .log-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+    }
+
+    .log-entry.success { border-left: 3px solid var(--green); }
+    .log-entry.error   { border-left: 3px solid var(--red); }
+    .log-entry.info    { border-left: 3px solid var(--accent); }
+
+    .log-time { color: var(--muted); font-size: 0.74rem; margin-bottom: 4px; }
+    .log-msg  { color: var(--text); line-height: 1.5; }
+
+    .tx-link {
+      display: inline-block;
+      margin-top: 4px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .tx-link:hover { text-decoration: underline; }
+
+    /* ── Status pill ──────────────────────────── */
+    .status-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .pill-active {
+      background: rgba(52,211,153,0.12);
+      color: var(--green);
+      border: 1px solid rgba(52,211,153,0.3);
+    }
+
+    .pill-none {
+      background: rgba(148,163,184,0.1);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Action row ──────────────────────────── */
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .action-row .btn { flex: 1; justify-content: center; }
+
+    /* ── Spinner ──────────────────────────────── */
+    .spin {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 640px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">💸</div>
+    FreelancePay
+    <span class="network-badge">TESTNET</span>
+  </div>
+  <div class="header-right">
+    <div class="wallet-info" id="wallet-info">
+      <div class="wallet-dot"></div>
+      <span class="wallet-addr" id="wallet-addr-display">—</span>
+    </div>
+    <button class="btn btn-primary" id="connect-btn" onclick="connectWallet()">
+      Connect Wallet
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- ── Not connected ── -->
+  <div id="connect-screen">
+    <div class="hero-icon">🔐</div>
+    <h1>Trustless Freelance Escrow</h1>
+    <p>Lock funds on Stellar, pay on delivery — no middleman, no disputes.</p>
+    <button class="btn btn-primary" onclick="connectWallet()" style="padding:14px 32px;font-size:1rem;">
+      Connect Freighter Wallet
+    </button>
+  </div>
+
+  <!-- ── App ── -->
+  <div id="app-content">
+
+    <!-- Deposit Card -->
+    <div class="card">
+      <div class="card-title">Create Escrow</div>
+
+      <div class="field">
+        <label>Client Address (you)</label>
+        <input id="client-addr" type="text" readonly placeholder="Connect wallet to auto-fill" />
+      </div>
+      <div class="field">
+        <label>Freelancer Address</label>
+        <input id="freelancer-addr" type="text" placeholder="G... (recipient)" />
+      </div>
+      <div class="field">
+        <label>Token Contract (XLM SAC)</label>
+        <input id="token-addr" type="text"
+          value="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
+          placeholder="SAC address" />
+      </div>
+      <div class="field">
+        <label>Amount (XLM)</label>
+        <input id="deposit-amount" type="number" min="0.0000001" step="0.1" placeholder="e.g. 10" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;"
+        id="deposit-btn" onclick="callDeposit()">
+        Lock Funds in Escrow
+      </button>
+    </div>
+
+    <!-- Manage Card -->
+    <div class="card">
+      <div class="card-title">Manage Escrow</div>
+
+      <div id="escrow-display" style="margin-bottom:1.2rem;">
+        <div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem 0;">
+          No active escrow loaded. Click "Refresh" to check.
+        </div>
+      </div>
+
+      <div class="action-row" style="margin-bottom:1rem;">
+        <button class="btn btn-ghost" onclick="callGetEscrow()">Refresh</button>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-success" id="release-btn" onclick="callRelease()">
+          Release to Freelancer
+        </button>
+        <button class="btn btn-danger" id="cancel-btn" onclick="callCancel()">
+          Cancel &amp; Refund
+        </button>
+      </div>
+    </div>
+
+    <!-- Log Card -->
+    <div class="card full-width">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Transaction Log
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem;"
+          onclick="document.getElementById('log').innerHTML=''">Clear</button>
+      </div>
+      <ul id="log">
+        <li class="log-entry info">
+          <div class="log-time">Ready</div>
+          <div class="log-msg">Connect your Freighter wallet to begin.</div>
+        </li>
+      </ul>
+    </div>
+
+  </div><!-- /app-content -->
+</main>
+
+<script type="module">
+// ────────────────────────────────────────────────────────────────────────────
+// Configuration — update CONTRACT_ID after deployment
+// ────────────────────────────────────────────────────────────────────────────
+const CONTRACT_ID   = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
+const RPC_URL       = 'https://soroban-testnet.stellar.org';
+const NETWORK_PASS  = 'Test SDF Network ; September 2015';
+const EXPLORER_BASE = 'https://stellar.expert/explorer/testnet/tx/';
+
+// ────────────────────────────────────────────────────────────────────────────
+// SDK imports (esm.sh CDN — no bundler needed)
+// ────────────────────────────────────────────────────────────────────────────
+import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
+import {
+  isConnected,
+  getPublicKey,
+  signTransaction,
+  getNetworkDetails,
+} from 'https://esm.sh/@stellar/freighter-api@3';
+
+// ────────────────────────────────────────────────────────────────────────────
+// State
+// ────────────────────────────────────────────────────────────────────────────
+let publicKey = null;
+const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
+
+// ────────────────────────────────────────────────────────────────────────────
+// Wallet
+// ────────────────────────────────────────────────────────────────────────────
+window.connectWallet = async function () {
+  try {
+    const connected = await isConnected();
+    if (!connected) {
+      log('error', 'Freighter not found. Install the Freighter browser extension first.');
+      window.open('https://www.freighter.app/', '_blank');
+      return;
+    }
+
+    const netDetails = await getNetworkDetails();
+    if (!netDetails.networkPassphrase.includes('Test SDF')) {
+      log('error', 'Please switch Freighter to Stellar Testnet.');
+      return;
+    }
+
+    publicKey = await getPublicKey();
+    document.getElementById('client-addr').value = publicKey;
+    document.getElementById('wallet-addr-display').textContent =
+      publicKey.slice(0, 6) + '…' + publicKey.slice(-4);
+    document.getElementById('wallet-info').style.display = 'flex';
+    document.getElementById('connect-btn').textContent = 'Connected';
+    document.getElementById('connect-btn').disabled = true;
+
+    document.getElementById('connect-screen').style.display = 'none';
+    document.getElementById('app-content').classList.add('visible');
+
+    log('success', `Wallet connected: ${publicKey}`);
+  } catch (err) {
+    log('error', 'Connection failed: ' + err.message);
+  }
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// Core: build → simulate → assemble → sign → submit → poll
+// ────────────────────────────────────────────────────────────────────────────
+async function invokeContract(method, args, btnId) {
+  if (!publicKey) { log('error', 'Connect wallet first.'); return; }
+  if (CONTRACT_ID === 'YOUR_CONTRACT_ID_HERE') {
+    log('error', 'Replace CONTRACT_ID in the source with your deployed contract address.');
+    return;
+  }
+
+  const btn = document.getElementById(btnId);
+  const origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Processing…';
+
+  try {
+    const account  = await server.getAccount(publicKey);
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: '100000',
+      networkPassphrase: NETWORK_PASS,
+    })
+      .addOperation(contract.call(method, ...args))
+      .setTimeout(30)
+      .build();
+
+    // Simulate
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.SorobanRpc.isSimulationError(simResult)) {
+      throw new Error('Simulation failed: ' + simResult.error);
+    }
+
+    // Assemble with fee + auth entries
+    let preparedTx = StellarSdk.SorobanRpc.assembleTransaction(tx, simResult);
+    if (typeof preparedTx.build === 'function') preparedTx = preparedTx.build();
+
+    // Sign with Freighter
+    const signedXDR = await signTransaction(preparedTx.toXDR(), {
+      networkPassphrase: NETWORK_PASS,
+    });
+
+    // Submit
+    const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASS);
+    const sendResult = await server.sendTransaction(signedTx);
+
+    if (sendResult.status === 'ERROR') {
+      throw new Error('Submit failed: ' + JSON.stringify(sendResult.errorResult));
+    }
+
+    // Poll for confirmation
+    const hash = sendResult.hash;
+    log('info', `Submitted: ${method} — polling for confirmation…`, hash);
+
+    let getResult;
+    let attempts = 0;
+    do {
+      await sleep(2000);
+      getResult = await server.getTransaction(hash);
+      attempts++;
+    } while (getResult.status === 'NOT_FOUND' && attempts < 15);
+
+    if (getResult.status === 'SUCCESS') {
+      log('success', `${method} confirmed!`, hash);
+      return getResult;
+    } else {
+      throw new Error('Transaction failed on-chain: ' + getResult.status);
+    }
+  } catch (err) {
+    log('error', method + ' failed: ' + err.message);
+    throw err;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origText;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Contract functions
+// ────────────────────────────────────────────────────────────────────────────
+window.callDeposit = async function () {
+  const client     = document.getElementById('client-addr').value.trim();
+  const freelancer = document.getElementById('freelancer-addr').value.trim();
+  const token      = document.getElementById('token-addr').value.trim();
+  const xlmAmount  = parseFloat(document.getElementById('deposit-amount').value);
+
+  if (!client || !freelancer || !token || isNaN(xlmAmount) || xlmAmount <= 0) {
+    log('error', 'Fill in all deposit fields with valid values.');
+    return;
+  }
+
+  const stroops = BigInt(Math.round(xlmAmount * 10_000_000));
+
+  const args = [
+    addr(client),
+    addr(freelancer),
+    addr(token),
+    i128(stroops),
+  ];
+
+  await invokeContract('deposit', args, 'deposit-btn');
+  await callGetEscrow();
+};
+
+window.callRelease = async function () {
+  const caller = document.getElementById('client-addr').value.trim();
+  if (!caller) { log('error', 'Connect wallet first.'); return; }
+  await invokeContract('release', [addr(caller)], 'release-btn');
+  renderEscrowEmpty();
+};
+
+window.callCancel = async function () {
+  const caller = document.getElementById('client-addr').value.trim();
+  if (!caller) { log('error', 'Connect wallet first.'); return; }
+  await invokeContract('cancel', [addr(caller)], 'cancel-btn');
+  renderEscrowEmpty();
+};
+
+window.callGetEscrow = async function () {
+  if (CONTRACT_ID === 'YOUR_CONTRACT_ID_HERE') {
+    log('error', 'Replace CONTRACT_ID first.');
+    return;
+  }
+  try {
+    const account  = await server.getAccount(publicKey || 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN');
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const tx = new StellarSdk.TransactionBuilder(account, {
+      fee: '1000',
+      networkPassphrase: NETWORK_PASS,
+    })
+      .addOperation(contract.call('get_escrow'))
+      .setTimeout(30)
+      .build();
+
+    const simResult = await server.simulateTransaction(tx);
+    if (StellarSdk.SorobanRpc.isSimulationError(simResult)) {
+      renderEscrowEmpty();
+      return;
+    }
+
+    const returnVal = simResult.result?.retval;
+    if (!returnVal) { renderEscrowEmpty(); return; }
+
+    const escrow = StellarSdk.scValToNative(returnVal);
+    renderEscrow(escrow);
+  } catch (err) {
+    log('error', 'get_escrow failed: ' + err.message);
+  }
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// UI helpers
+// ────────────────────────────────────────────────────────────────────────────
+function renderEscrow(e) {
+  const xlm = (Number(e.amount) / 10_000_000).toFixed(7);
+  document.getElementById('escrow-display').innerHTML = `
+    <div class="escrow-row">
+      <span class="escrow-label">Status</span>
+      <span class="status-pill pill-active">Active</span>
+    </div>
+    <div class="escrow-row">
+      <span class="escrow-label">Client</span>
+      <span class="escrow-value">${e.client}</span>
+    </div>
+    <div class="escrow-row">
+      <span class="escrow-label">Freelancer</span>
+      <span class="escrow-value">${e.freelancer}</span>
+    </div>
+    <div class="escrow-row">
+      <span class="escrow-label">Amount</span>
+      <span class="escrow-amount">${xlm} XLM</span>
+    </div>
+    <div class="escrow-row">
+      <span class="escrow-label">Token</span>
+      <span class="escrow-value">${e.token}</span>
+    </div>
+  `;
+}
+
+function renderEscrowEmpty() {
+  document.getElementById('escrow-display').innerHTML = `
+    <div class="escrow-row">
+      <span class="escrow-label">Status</span>
+      <span class="status-pill pill-none">No Active Escrow</span>
+    </div>
+  `;
+}
+
+function log(type, msg, txHash) {
+  const ul   = document.getElementById('log');
+  const li   = document.createElement('li');
+  li.className = 'log-entry ' + type;
+
+  const time = new Date().toLocaleTimeString();
+  let inner  = `<div class="log-time">${time}</div><div class="log-msg">${msg}</div>`;
+
+  if (txHash) {
+    inner += `<a class="tx-link" href="${EXPLORER_BASE}${txHash}" target="_blank">
+      View on Stellar Expert →
+    </a>`;
+  }
+
+  li.innerHTML = inner;
+  ul.prepend(li);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ScVal conversion helpers
+// ────────────────────────────────────────────────────────────────────────────
+function addr(str) {
+  return StellarSdk.nativeToScVal(str, { type: 'address' });
+}
+
+function i128(bigintVal) {
+  return StellarSdk.nativeToScVal(bigintVal, { type: 'i128' });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Utilities
+// ────────────────────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+</script>
+</body>
+</html>

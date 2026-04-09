@@ -1,100 +1,182 @@
 #![cfg(test)]
 
+use soroban_sdk::{
+    testutils::Address as _,
+    token::{Client as TokenClient, StellarAssetClient},
+    Address, Env,
+};
+
 use super::*;
-use soroban_sdk::{Address, Env};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use soroban_sdk::{testutils::Address as _, Address, Env};
+// ── helpers ────────────────────────────────────────────────────────────────
 
-    /// Test 1 (Happy Path):
-    /// Client deposits funds, then successfully releases to freelancer.
-    #[test]
-    fn test_deposit_and_release_success() {
-        let env = Env::default();
-        env.mock_all_auths();
+/// Creates a Stellar Asset Contract (SAC) and returns its address.
+fn create_token(env: &Env, admin: &Address) -> Address {
+    env.register_stellar_asset_contract_v2(admin.clone())
+        .address()
+}
 
-        // Register the contract
-        let contract_id = env.register(FreelanceEscrow, ());
-        let client = FreelanceEscrowClient::new(&env, &contract_id);
+struct TestSetup {
+    env: Env,
+    contract_id: Address,
+    client_addr: Address,
+    freelancer_addr: Address,
+    token_addr: Address,
+    amount: i128,
+}
 
-        // Generate mock addresses
-        let client_address = Address::generate(&env);
-        let freelancer_address = Address::generate(&env);
-        let amount: i128 = 5_000_000; // 5 XLM in stroops
+fn setup() -> TestSetup {
+    let env = Env::default();
+    env.mock_all_auths();
 
-        // Step 1: Client deposits into escrow
-        client.deposit(&client_address, &freelancer_address, &amount);
+    let contract_id = env.register(FreelanceEscrow, ());
 
-        // Step 2: Verify escrow exists with correct data
-        let escrow = client.get_escrow();
-        assert_eq!(escrow.client, client_address);
-        assert_eq!(escrow.freelancer, freelancer_address);
-        assert_eq!(escrow.amount, amount);
+    let token_admin = Address::generate(&env);
+    let token_addr = create_token(&env, &token_admin);
 
-        // Step 3: Client releases funds to freelancer
-        client.release(&client_address);
+    let client_addr = Address::generate(&env);
+    let freelancer_addr = Address::generate(&env);
+    let amount: i128 = 5_000_000; // 0.5 XLM in stroops
+
+    // Fund the client wallet with 10 XLM worth of tokens
+    StellarAssetClient::new(&env, &token_addr).mint(&client_addr, &10_000_000);
+
+    TestSetup {
+        env,
+        contract_id,
+        client_addr,
+        freelancer_addr,
+        token_addr,
+        amount,
     }
+}
 
-    /// Test 2 (Edge Case):
-    /// A non-client caller tries to release funds and gets rejected.
-    #[test]
-    #[should_panic(expected = "Unauthorized")]
-    fn test_release_by_non_client_is_rejected() {
-        let env = Env::default();
-        env.mock_all_auths();
+// ── tests ──────────────────────────────────────────────────────────────────
 
-        // Register the contract
-        let contract_id = env.register(FreelanceEscrow, ());
-        let client = FreelanceEscrowClient::new(&env, &contract_id);
+/// Happy path: deposit then release transfers funds to freelancer.
+#[test]
+fn test_deposit_and_release_success() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let token = TokenClient::new(&s.env, &s.token_addr);
 
-        // Generate mock addresses
-        let client_address = Address::generate(&env);
-        let freelancer_address = Address::generate(&env);
-        let random_attacker = Address::generate(&env);
-        let amount: i128 = 5_000_000;
+    // Deposit
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &s.amount,
+    );
 
-        // Client deposits into escrow
-        client.deposit(&client_address, &freelancer_address, &amount);
+    // Funds moved out of client wallet into contract
+    assert_eq!(token.balance(&s.client_addr), 5_000_000);
+    assert_eq!(token.balance(&s.contract_id), 5_000_000);
 
-        // Attacker tries to release — should panic with Unauthorized
-        client.release(&random_attacker);
-    }
+    // Verify on-chain state
+    let escrow = contract.get_escrow();
+    assert_eq!(escrow.client, s.client_addr);
+    assert_eq!(escrow.freelancer, s.freelancer_addr);
+    assert_eq!(escrow.amount, s.amount);
 
-    /// Test 3 (State Verification):
-    /// After deposit, get_escrow returns the correct client, freelancer, and amount.
-    #[test]
-    fn test_escrow_state_after_deposit() {
-        let env = Env::default();
-        env.mock_all_auths();
+    // Release to freelancer
+    contract.release(&s.client_addr);
 
-        // Register the contract
-        let contract_id = env.register(FreelanceEscrow, ());
-        let client = FreelanceEscrowClient::new(&env, &contract_id);
+    // Freelancer received funds; contract is drained
+    assert_eq!(token.balance(&s.freelancer_addr), 5_000_000);
+    assert_eq!(token.balance(&s.contract_id), 0);
+}
 
-        // Generate mock addresses
-        let client_address = Address::generate(&env);
-        let freelancer_address = Address::generate(&env);
-        let amount: i128 = 10_000_000; // 10 XLM in stroops
+/// Only the original client may release — attacker is rejected.
+#[test]
+#[should_panic(expected = "Unauthorized")]
+fn test_release_by_non_client_is_rejected() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let attacker = Address::generate(&s.env);
 
-        // Deposit into escrow
-        client.deposit(&client_address, &freelancer_address, &amount);
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &s.amount,
+    );
 
-        // Fetch escrow state and verify every field
-        let escrow = client.get_escrow();
+    contract.release(&attacker); // must panic
+}
 
-        assert_eq!(
-            escrow.client, client_address,
-            "Client address should match"
-        );
-        assert_eq!(
-            escrow.freelancer, freelancer_address,
-            "Freelancer address should match"
-        );
-        assert_eq!(
-            escrow.amount, amount,
-            "Escrowed amount should match deposited amount"
-        );
-    }
+/// Cancel refunds the full amount back to the client.
+#[test]
+fn test_cancel_refunds_client() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let token = TokenClient::new(&s.env, &s.token_addr);
+
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &s.amount,
+    );
+
+    assert_eq!(token.balance(&s.client_addr), 5_000_000); // half gone
+
+    contract.cancel(&s.client_addr);
+
+    // Full refund
+    assert_eq!(token.balance(&s.client_addr), 10_000_000);
+    assert_eq!(token.balance(&s.contract_id), 0);
+}
+
+/// Double-deposit is rejected.
+#[test]
+#[should_panic(expected = "Escrow already exists")]
+fn test_double_deposit_is_rejected() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &s.amount,
+    );
+
+    // Second deposit must fail
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &s.amount,
+    );
+}
+
+/// get_escrow returns correct state immediately after deposit.
+#[test]
+fn test_escrow_state_after_deposit() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+
+    let amount: i128 = 10_000_000;
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.token_addr,
+        &amount,
+    );
+
+    let escrow = contract.get_escrow();
+    assert_eq!(escrow.client, s.client_addr, "client mismatch");
+    assert_eq!(escrow.freelancer, s.freelancer_addr, "freelancer mismatch");
+    assert_eq!(escrow.amount, amount, "amount mismatch");
+    assert_eq!(escrow.token, s.token_addr, "token mismatch");
+}
+
+/// Zero-amount deposit is rejected.
+#[test]
+#[should_panic(expected = "Amount must be positive")]
+fn test_zero_amount_deposit_rejected() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+
+    contract.deposit(&s.client_addr, &s.freelancer_addr, &s.token_addr, &0);
 }
