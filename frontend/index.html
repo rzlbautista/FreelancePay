@@ -729,7 +729,7 @@
       <div class="dot-green"></div>
       <span class="wallet-addr" id="wallet-addr-display">—</span>
     </div>
-    <button class="btn btn-primary" id="header-connect-btn" onclick="connectWallet()">
+    <button class="btn btn-primary" id="header-connect-btn">
       Connect Wallet
     </button>
   </div>
@@ -853,7 +853,7 @@
                class="btn btn-ghost" style="font-size:0.85rem;">
               Install Freighter ↗
             </a>
-            <button class="btn btn-primary" id="connect-btn" onclick="connectWallet()">
+            <button class="btn btn-primary" id="connect-btn">
               Connect Wallet
             </button>
           </div>
@@ -875,7 +875,7 @@
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-success" style="font-size:0.85rem;" onclick="fundWallet()" id="fund-btn">
+            <button class="btn btn-success" style="font-size:0.85rem;" id="fund-btn">
               💧 Get Free Testnet XLM
             </button>
           </div>
@@ -948,7 +948,7 @@
         </div>
 
         <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;"
-          id="deposit-btn" onclick="callDeposit()">
+          id="deposit-btn">
           Lock Funds in Escrow
         </button>
       </div>
@@ -958,7 +958,7 @@
         <div class="card-header">
           <div class="card-title">Escrow Status</div>
           <button class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem;"
-            onclick="callGetEscrow()">Refresh</button>
+            id="refresh-btn">Refresh</button>
         </div>
 
         <div id="escrow-display">
@@ -968,10 +968,10 @@
         </div>
 
         <div class="action-grid" style="margin-top:1.2rem;">
-          <button class="btn btn-success" id="release-btn" onclick="callRelease()">
+          <button class="btn btn-success" id="release-btn">
             ✅ Release Funds
           </button>
-          <button class="btn btn-danger" id="cancel-btn" onclick="callCancel()">
+          <button class="btn btn-danger" id="cancel-btn">
             ↩ Cancel &amp; Refund
           </button>
         </div>
@@ -983,11 +983,11 @@
           </p>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-orange" style="flex:1;font-size:0.82rem;"
-              id="resolve-freelancer-btn" onclick="callResolve(true)">
+              id="resolve-freelancer-btn">
               Pay Freelancer
             </button>
             <button class="btn btn-ghost" style="flex:1;font-size:0.82rem;"
-              id="resolve-client-btn" onclick="callResolve(false)">
+              id="resolve-client-btn">
               Refund Client
             </button>
           </div>
@@ -999,7 +999,7 @@
         <div class="card-header">
           <div class="card-title">Transaction Log</div>
           <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem;"
-            onclick="document.getElementById('log').innerHTML=''">Clear</button>
+            id="clear-log-btn">Clear</button>
         </div>
         <ul id="log">
           <li class="log-entry info">
@@ -1430,6 +1430,20 @@ function u64(n)    { return StellarSdk.nativeToScVal(n, { type: 'u64' }); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 window.hideBanner = function() {}; // no-op, kept for safety
+
+// ── Wire up all button event listeners ───────────────────────────────────────
+// Using addEventListener instead of inline onclick so module-scoped functions
+// are guaranteed to exist before any click can fire.
+document.getElementById('connect-btn').addEventListener('click', () => connectWallet());
+document.getElementById('header-connect-btn').addEventListener('click', () => connectWallet());
+document.getElementById('fund-btn').addEventListener('click', () => fundWallet());
+document.getElementById('deposit-btn').addEventListener('click', () => callDeposit());
+document.getElementById('refresh-btn').addEventListener('click', () => callGetEscrow());
+document.getElementById('release-btn').addEventListener('click', () => callRelease());
+document.getElementById('cancel-btn').addEventListener('click', () => callCancel());
+document.getElementById('resolve-freelancer-btn').addEventListener('click', () => callResolve(true));
+document.getElementById('resolve-client-btn').addEventListener('click', () => callResolve(false));
+document.getElementById('clear-log-btn').addEventListener('click', () => { document.getElementById('log').innerHTML = ''; });
 </script>
 </body>
 </html>
