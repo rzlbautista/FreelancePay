@@ -198,7 +198,7 @@ Open `frontend/index.html` directly in any browser with Freighter installed.
 - [ ] `CONTRACT_ID` updated in `frontend/index.html`
 - [ ] Deposit → Release flow tested end-to-end in browser
 - [ ] GitHub repo pushed: `https://github.com/rzlbautista/FreelancePay`
-- [ ] Stellar Expert link confirmed: `https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6`
+- [ ] Stellar Expert link confirmed: `https://stellar.expert/explorer/testnet/contract/CDBHMNXW2DKQTIN35K7MLPPNL6HAOHRE2QBEMHHRCW4ND2DYRIHYOOA2`
 
 ---
 

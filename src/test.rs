@@ -10,17 +10,12 @@ use super::*;
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-/// Creates a Stellar Asset Contract (SAC) and returns its address.
-fn create_token(env: &Env, admin: &Address) -> Address {
-    env.register_stellar_asset_contract_v2(admin.clone())
-        .address()
-}
-
 struct TestSetup {
     env: Env,
     contract_id: Address,
     client_addr: Address,
     freelancer_addr: Address,
+    arbitrator_addr: Address,
     token_addr: Address,
     amount: i128,
 }
@@ -32,13 +27,16 @@ fn setup() -> TestSetup {
     let contract_id = env.register(FreelanceEscrow, ());
 
     let token_admin = Address::generate(&env);
-    let token_addr = create_token(&env, &token_admin);
+    let token_addr = env
+        .register_stellar_asset_contract_v2(token_admin.clone())
+        .address();
 
     let client_addr = Address::generate(&env);
     let freelancer_addr = Address::generate(&env);
-    let amount: i128 = 5_000_000; // 0.5 XLM in stroops
+    let arbitrator_addr = Address::generate(&env);
+    let amount: i128 = 5_000_000;
 
-    // Fund the client wallet with 10 XLM worth of tokens
+    // Fund client with 10 XLM worth of tokens
     StellarAssetClient::new(&env, &token_addr).mint(&client_addr, &10_000_000);
 
     TestSetup {
@@ -46,47 +44,50 @@ fn setup() -> TestSetup {
         contract_id,
         client_addr,
         freelancer_addr,
+        arbitrator_addr,
         token_addr,
         amount,
     }
 }
 
+fn do_deposit(s: &TestSetup) {
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.arbitrator_addr,
+        &s.token_addr,
+        &s.amount,
+        &0u64, // no deadline
+    );
+}
+
 // ── tests ──────────────────────────────────────────────────────────────────
 
-/// Happy path: deposit then release transfers funds to freelancer.
+/// Happy path: deposit → release sends funds to freelancer.
 #[test]
 fn test_deposit_and_release_success() {
     let s = setup();
     let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
     let token = TokenClient::new(&s.env, &s.token_addr);
 
-    // Deposit
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &s.amount,
-    );
+    do_deposit(&s);
 
-    // Funds moved out of client wallet into contract
     assert_eq!(token.balance(&s.client_addr), 5_000_000);
     assert_eq!(token.balance(&s.contract_id), 5_000_000);
 
-    // Verify on-chain state
     let escrow = contract.get_escrow();
     assert_eq!(escrow.client, s.client_addr);
     assert_eq!(escrow.freelancer, s.freelancer_addr);
     assert_eq!(escrow.amount, s.amount);
 
-    // Release to freelancer
     contract.release(&s.client_addr);
 
-    // Freelancer received funds; contract is drained
     assert_eq!(token.balance(&s.freelancer_addr), 5_000_000);
     assert_eq!(token.balance(&s.contract_id), 0);
 }
 
-/// Only the original client may release — attacker is rejected.
+/// Only the original client may release.
 #[test]
 #[should_panic(expected = "Unauthorized")]
 fn test_release_by_non_client_is_rejected() {
@@ -94,37 +95,64 @@ fn test_release_by_non_client_is_rejected() {
     let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
     let attacker = Address::generate(&s.env);
 
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &s.amount,
-    );
-
-    contract.release(&attacker); // must panic
+    do_deposit(&s);
+    contract.release(&attacker);
 }
 
-/// Cancel refunds the full amount back to the client.
+/// Cancel returns funds to the client.
 #[test]
 fn test_cancel_refunds_client() {
     let s = setup();
     let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
     let token = TokenClient::new(&s.env, &s.token_addr);
 
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &s.amount,
-    );
-
-    assert_eq!(token.balance(&s.client_addr), 5_000_000); // half gone
+    do_deposit(&s);
+    assert_eq!(token.balance(&s.client_addr), 5_000_000);
 
     contract.cancel(&s.client_addr);
 
-    // Full refund
     assert_eq!(token.balance(&s.client_addr), 10_000_000);
     assert_eq!(token.balance(&s.contract_id), 0);
+}
+
+/// Arbitrator resolves in favour of the freelancer.
+#[test]
+fn test_resolve_pays_freelancer() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let token = TokenClient::new(&s.env, &s.token_addr);
+
+    do_deposit(&s);
+    contract.resolve(&s.arbitrator_addr, &true);
+
+    assert_eq!(token.balance(&s.freelancer_addr), 5_000_000);
+    assert_eq!(token.balance(&s.contract_id), 0);
+}
+
+/// Arbitrator resolves in favour of the client (refund).
+#[test]
+fn test_resolve_refunds_client() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let token = TokenClient::new(&s.env, &s.token_addr);
+
+    do_deposit(&s);
+    contract.resolve(&s.arbitrator_addr, &false);
+
+    assert_eq!(token.balance(&s.client_addr), 10_000_000);
+    assert_eq!(token.balance(&s.contract_id), 0);
+}
+
+/// Non-arbitrator cannot resolve.
+#[test]
+#[should_panic(expected = "Unauthorized")]
+fn test_resolve_by_non_arbitrator_rejected() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let attacker = Address::generate(&s.env);
+
+    do_deposit(&s);
+    contract.resolve(&attacker, &true);
 }
 
 /// Double-deposit is rejected.
@@ -132,43 +160,8 @@ fn test_cancel_refunds_client() {
 #[should_panic(expected = "Escrow already exists")]
 fn test_double_deposit_is_rejected() {
     let s = setup();
-    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
-
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &s.amount,
-    );
-
-    // Second deposit must fail
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &s.amount,
-    );
-}
-
-/// get_escrow returns correct state immediately after deposit.
-#[test]
-fn test_escrow_state_after_deposit() {
-    let s = setup();
-    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
-
-    let amount: i128 = 10_000_000;
-    contract.deposit(
-        &s.client_addr,
-        &s.freelancer_addr,
-        &s.token_addr,
-        &amount,
-    );
-
-    let escrow = contract.get_escrow();
-    assert_eq!(escrow.client, s.client_addr, "client mismatch");
-    assert_eq!(escrow.freelancer, s.freelancer_addr, "freelancer mismatch");
-    assert_eq!(escrow.amount, amount, "amount mismatch");
-    assert_eq!(escrow.token, s.token_addr, "token mismatch");
+    do_deposit(&s);
+    do_deposit(&s);
 }
 
 /// Zero-amount deposit is rejected.
@@ -177,6 +170,36 @@ fn test_escrow_state_after_deposit() {
 fn test_zero_amount_deposit_rejected() {
     let s = setup();
     let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.arbitrator_addr,
+        &s.token_addr,
+        &0,
+        &0u64,
+    );
+}
 
-    contract.deposit(&s.client_addr, &s.freelancer_addr, &s.token_addr, &0);
+/// Escrow state is correct after deposit (includes deadline and arbitrator).
+#[test]
+fn test_escrow_state_after_deposit() {
+    let s = setup();
+    let contract = FreelanceEscrowClient::new(&s.env, &s.contract_id);
+    let deadline: u64 = 1_800_000_000;
+
+    contract.deposit(
+        &s.client_addr,
+        &s.freelancer_addr,
+        &s.arbitrator_addr,
+        &s.token_addr,
+        &s.amount,
+        &deadline,
+    );
+
+    let escrow = contract.get_escrow();
+    assert_eq!(escrow.client, s.client_addr);
+    assert_eq!(escrow.freelancer, s.freelancer_addr);
+    assert_eq!(escrow.arbitrator, s.arbitrator_addr);
+    assert_eq!(escrow.amount, s.amount);
+    assert_eq!(escrow.deadline, deadline);
 }
