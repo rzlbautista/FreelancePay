@@ -2,7 +2,7 @@
 name = "freelancepay"
 version = "0.1.0"
 edition = "2021"
-description = "A DAO community treasury with token-weighted governance, spending proposals, veto period before execution, and on-chain fund release on Soroban"
+description = "Trustless freelance escrow on Stellar — client locks funds, freelancer gets paid on delivery, powered by Soroban smart contracts"
 license = "MIT"
 
 [lib]
