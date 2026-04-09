@@ -6,935 +6,185 @@
   <title>FreelancePay — Trustless Escrow on Stellar</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #080b12;
-      --surface: #0f1420;
-      --card: #151c2e;
-      --card2: #1a2236;
-      --border: #232d45;
-      --accent: #7c6df4;
-      --accent2: #a78bfa;
-      --green: #34d399;
-      --red: #f87171;
-      --yellow: #fbbf24;
-      --blue: #60a5fa;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --muted2: #94a3b8;
-      --radius: 14px;
-      --font: 'Inter', system-ui, sans-serif;
+      --bg: #080b12; --surface: #0f1420; --card: #151c2e;
+      --border: #232d45; --accent: #7c6df4; --accent2: #a78bfa;
+      --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+      --text: #e2e8f0; --muted: #64748b; --muted2: #94a3b8;
+      --radius: 14px; --font: 'Inter', system-ui, sans-serif;
     }
-
     html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; line-height: 1.6; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      min-height: 100vh;
-      line-height: 1.6;
-    }
-
-    /* ── HEADER ─────────────────────────────────── */
     header {
-      background: rgba(8,11,18,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: rgba(8,11,18,0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
     }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.15rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      text-decoration: none;
-      color: var(--text);
-    }
-
-    .logo-mark {
-      width: 34px; height: 34px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-
-    .badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    .badge-testnet {
-      background: rgba(251,191,36,0.1);
-      color: var(--yellow);
-      border: 1px solid rgba(251,191,36,0.25);
-    }
-
-    .header-right { display: flex; align-items: center; gap: 10px; }
-
-    .wallet-chip {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px 14px;
-      font-size: 0.83rem;
-    }
-
-    .dot-green {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      flex-shrink: 0;
-    }
-
-    .wallet-addr { font-family: monospace; color: var(--muted2); }
-
-    nav a {
-      color: var(--muted2);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 500;
-      padding: 6px 2px;
-      transition: color 0.15s;
-    }
-
-    nav a:hover { color: var(--text); }
-
-    /* ── BUTTONS ─────────────────────────────────── */
-    .btn {
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: none;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      font-family: var(--font);
-      white-space: nowrap;
-    }
-
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #6d5ce8);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(124,109,244,0.3);
-    }
+    .btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-family: var(--font); white-space: nowrap; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #6d5ce8); color: #fff; box-shadow: 0 4px 20px rgba(124,109,244,0.3); }
     .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(124,109,244,0.45); }
-
-    .btn-success {
-      background: rgba(52,211,153,0.12);
-      color: var(--green);
-      border: 1px solid rgba(52,211,153,0.3);
-    }
+    .btn-success { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
     .btn-success:hover:not(:disabled) { background: rgba(52,211,153,0.22); }
-
-    .btn-danger {
-      background: rgba(248,113,113,0.1);
-      color: var(--red);
-      border: 1px solid rgba(248,113,113,0.25);
-    }
+    .btn-danger { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
     .btn-danger:hover:not(:disabled) { background: rgba(248,113,113,0.2); }
-
-    .btn-orange {
-      background: rgba(251,191,36,0.1);
-      color: var(--yellow);
-      border: 1px solid rgba(251,191,36,0.25);
-    }
+    .btn-orange { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
     .btn-orange:hover:not(:disabled) { background: rgba(251,191,36,0.2); }
-
-    .btn-ghost {
-      background: var(--card);
-      color: var(--muted2);
-      border: 1px solid var(--border);
-    }
+    .btn-ghost { background: var(--card); color: var(--muted2); border: 1px solid var(--border); }
     .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
 
-    /* ── HERO ────────────────────────────────────── */
-    .hero {
-      padding: 6rem 2rem 5rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(124,109,244,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(124,109,244,0.1);
-      border: 1px solid rgba(124,109,244,0.25);
-      border-radius: 20px;
-      padding: 5px 14px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--accent2);
-      letter-spacing: 0.5px;
-      margin-bottom: 1.6rem;
-    }
-
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.4rem);
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -1.5px;
-      margin-bottom: 1.2rem;
-    }
-
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--accent2), #c4b5fd);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-sub {
-      font-size: 1.1rem;
-      color: var(--muted2);
-      max-width: 520px;
-      margin: 0 auto 2.5rem;
-      line-height: 1.7;
-    }
-
+    .hero { padding: 5rem 2rem 4rem; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(124,109,244,0.12) 0%, transparent 70%); pointer-events: none; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 1rem; }
+    .hero h1 span { background: linear-gradient(135deg, var(--accent2), #c4b5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 1.05rem; color: var(--muted2); max-width: 500px; margin: 0 auto 2rem; }
     .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-lg { padding: 13px 26px; font-size: 0.95rem; border-radius: 12px; }
 
-    .btn-lg { padding: 14px 28px; font-size: 1rem; border-radius: 12px; }
+    .section { max-width: 960px; margin: 0 auto; padding: 3rem 2rem; }
+    .section-title { text-align: center; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.4rem; }
+    .section-sub { text-align: center; color: var(--muted2); font-size: 0.92rem; margin-bottom: 2rem; }
 
-    /* ── PROBLEM/SOLUTION ─────────────────────────── */
-    .compare {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      max-width: 800px;
-      margin: 4rem auto;
-      padding: 0 2rem;
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+    .card-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; }
 
-    .compare-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
-    .compare-card.bad { border-color: rgba(248,113,113,0.25); }
-    .compare-card.good { border-color: rgba(52,211,153,0.25); }
-
-    .compare-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-
-    .compare-card.bad .compare-label { color: var(--red); }
-    .compare-card.good .compare-label { color: var(--green); }
-
-    .compare-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 0.9rem;
-      color: var(--muted2);
-      margin-bottom: 10px;
-      line-height: 1.5;
-    }
-
-    .compare-icon { flex-shrink: 0; margin-top: 1px; }
-
-    /* ── HOW IT WORKS ─────────────────────────────── */
-    .section {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 3rem 2rem;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 1.7rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 0.5rem;
-    }
-
-    .section-sub {
-      text-align: center;
-      color: var(--muted2);
-      font-size: 0.95rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      position: relative;
-    }
-
-    .step-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      text-align: center;
-      position: relative;
-    }
-
-    .step-num {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, rgba(124,109,244,0.2), rgba(167,139,250,0.2));
-      border: 1px solid rgba(124,109,244,0.3);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-      margin: 0 auto 1rem;
-    }
-
-    .step-title {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-
-    .step-desc { font-size: 0.85rem; color: var(--muted2); line-height: 1.5; }
-
-    .step-arrow {
-      position: absolute;
-      right: -1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--border);
-      font-size: 1.4rem;
-      z-index: 1;
-    }
-
-    /* ── WHY STELLAR ─────────────────────────────── */
-    .why-stellar {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .why-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-    }
-
-    .why-item {
-      text-align: center;
-      padding: 1.2rem 1rem;
-    }
-
-    .why-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.6rem;
-    }
-
-    .why-stat {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--accent2);
-      letter-spacing: -0.5px;
-    }
-
-    .why-label {
-      font-size: 0.8rem;
-      color: var(--muted2);
-      margin-top: 4px;
-    }
-
-    /* ── APP SECTION ─────────────────────────────── */
-    #app {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 3rem 2rem 5rem;
-    }
-
-    .app-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
-    .full { grid-column: 1 / -1; }
-
-    /* ── CARDS ──────────────────────────────────── */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.4rem;
-    }
-
-    .card-title {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* ── FORM ──────────────────────────────────── */
     .field { margin-bottom: 1rem; }
-
-    label {
-      display: block;
-      font-size: 0.79rem;
-      color: var(--muted2);
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
-    input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 13px;
-      color: var(--text);
-      font-size: 0.88rem;
-      font-family: var(--font);
-      transition: border-color 0.15s;
-    }
-
+    label { display: block; font-size: 0.79rem; color: var(--muted2); margin-bottom: 5px; font-weight: 500; }
+    input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; color: var(--text); font-size: 0.88rem; font-family: var(--font); transition: border-color 0.15s; }
     input:focus { outline: none; border-color: var(--accent); }
     input[readonly] { color: var(--muted2); cursor: default; }
     input::placeholder { color: #2d3748; }
-
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    /* ── STATUS TRACKER ──────────────────────────── */
-    .tracker {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 1.4rem;
-    }
+    .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .full { grid-column: 1 / -1; }
 
-    .tracker-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-      position: relative;
-    }
+    .dot-green { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
 
-    .tracker-dot {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: var(--surface);
-      border: 2px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--muted);
-      z-index: 1;
-      transition: all 0.3s;
-    }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.25); border-top-color: currentColor; border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .tracker-dot.active {
-      background: rgba(124,109,244,0.2);
-      border-color: var(--accent);
-      color: var(--accent2);
-    }
-
-    .tracker-dot.done {
-      background: rgba(52,211,153,0.2);
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .tracker-label {
-      font-size: 0.68rem;
-      color: var(--muted);
-      margin-top: 6px;
-      text-align: center;
-      font-weight: 600;
-    }
-
-    .tracker-line {
-      flex: 1;
-      height: 2px;
-      background: var(--border);
-      margin-top: -14px;
-      transition: background 0.3s;
-    }
-
-    .tracker-line.done { background: var(--green); }
-
-    /* ── ESCROW STATE ──────────────────────────── */
-    .escrow-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
-    }
-
+    .escrow-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
     .escrow-row:last-child { border-bottom: none; }
-
-    .escrow-key {
-      color: var(--muted);
-      min-width: 90px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-
-    .escrow-val {
-      font-family: monospace;
-      font-size: 0.78rem;
-      text-align: right;
-      max-width: 60%;
-      word-break: break-all;
-      color: var(--muted2);
-    }
-
-    .escrow-amount-big {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--green);
-      letter-spacing: -0.5px;
-      text-align: right;
-    }
-
-    .status-pill {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
+    .escrow-key { color: var(--muted); font-size: 0.76rem; font-weight: 600; min-width: 90px; }
+    .escrow-val { font-family: monospace; font-size: 0.76rem; text-align: right; max-width: 60%; word-break: break-all; color: var(--muted2); }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
     .pill-active { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
-    .pill-none   { background: rgba(100,116,139,0.1); color: var(--muted2); border: 1px solid var(--border); }
+    .pill-none { background: rgba(100,116,139,0.1); color: var(--muted2); border: 1px solid var(--border); }
 
-    /* ── ACTION BUTTONS ──────────────────────────── */
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    /* ── DISPUTE PANEL ──────────────────────────── */
-    .dispute-panel {
-      background: rgba(251,191,36,0.04);
-      border: 1px solid rgba(251,191,36,0.2);
-      border-radius: 10px;
-      padding: 1.2rem;
-      margin-top: 1rem;
-    }
-
-    .dispute-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--yellow);
-      margin-bottom: 0.8rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* ── LOG ──────────────────────────────────── */
-    #log { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-
-    .log-entry {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 14px;
-      font-size: 0.82rem;
-    }
-
+    #log { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+    .log-entry { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 10px 14px; font-size: 0.82rem; }
     .log-entry.success { border-left: 3px solid var(--green); }
     .log-entry.error   { border-left: 3px solid var(--red); }
     .log-entry.info    { border-left: 3px solid var(--accent); }
-
-    .log-time  { color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
-    .log-msg   { color: var(--text); line-height: 1.5; }
-
-    .tx-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 5px;
-      color: var(--accent2);
-      font-size: 0.77rem;
-      text-decoration: none;
-      word-break: break-all;
-    }
+    .log-time { color: var(--muted); font-size: 0.7rem; margin-bottom: 3px; }
+    .log-msg  { color: var(--text); line-height: 1.5; word-break: break-all; }
+    .tx-link  { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--accent2); font-size: 0.76rem; text-decoration: none; word-break: break-all; }
     .tx-link:hover { text-decoration: underline; }
 
-    /* ── SPINNER ──────────────────────────────── */
-    .spin {
-      display: inline-block;
-      width: 13px; height: 13px;
-      border: 2px solid rgba(255,255,255,0.25);
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      flex-shrink: 0;
-    }
+    .alert { padding: 10px 14px; border-radius: 8px; font-size: 0.83rem; line-height: 1.5; margin-top: 0.8rem; display: none; }
+    .alert-error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; }
+    .alert-success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); color: #6ee7b7; }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── CONNECT OVERLAY ──────────────────────── */
-    #connect-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(8,11,18,0.92);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      padding: 2rem;
-    }
-
-    .connect-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 2.5rem 2rem;
-      text-align: center;
-      max-width: 460px;
-      width: 100%;
-    }
-
-    .connect-icon {
-      width: 64px; height: 64px;
-      background: linear-gradient(135deg, rgba(124,109,244,0.2), rgba(167,139,250,0.15));
-      border: 1px solid rgba(124,109,244,0.3);
-      border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      margin: 0 auto 1.2rem;
-    }
-
-    .connect-box h2 {
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 0.4rem;
-      letter-spacing: -0.3px;
-    }
-
-    /* Setup steps */
-    .setup-step {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      text-align: left;
-      transition: opacity 0.3s;
-    }
-
-    .setup-num {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      background: rgba(124,109,244,0.15);
-      border: 1px solid rgba(124,109,244,0.3);
-      color: var(--accent2);
-      font-size: 0.78rem;
-      font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .setup-num.done {
-      background: rgba(52,211,153,0.15);
-      border-color: rgba(52,211,153,0.3);
-      color: var(--green);
-    }
-
-    .setup-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 2px; }
-    .setup-desc  { font-size: 0.78rem; color: var(--muted2); }
-
-    /* ── FOOTER ──────────────────────────────── */
-    footer {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 2rem;
-      text-align: center;
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 1.5rem 2rem; text-align: center; font-size: 0.8rem; color: var(--muted); }
     footer a { color: var(--accent2); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
 
-    /* ── RESPONSIVE ──────────────────────────── */
     @media (max-width: 680px) {
-      .app-grid, .steps, .why-grid, .compare, .action-grid { grid-template-columns: 1fr; }
-      .step-arrow { display: none; }
-      .hero h1 { font-size: 1.9rem; }
-      nav { display: none; }
+      .app-grid, .field-row { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
 <header>
   <a href="#" class="logo">
     <div class="logo-mark">💸</div>
     FreelancePay
-    <span class="badge badge-testnet">Testnet</span>
+    <span class="badge">Testnet</span>
   </a>
-  <nav style="display:flex;gap:1.5rem;">
-    <a href="#how">How it works</a>
-    <a href="#app">Launch App</a>
-  </nav>
-  <div class="header-right">
-    <div class="wallet-chip" id="wallet-chip">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div id="wallet-chip" style="display:none;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 14px;font-size:0.82rem;">
       <div class="dot-green"></div>
-      <span class="wallet-addr" id="wallet-addr-display">—</span>
+      <span id="wallet-addr-short" style="font-family:monospace;color:var(--muted2);"></span>
     </div>
-    <button class="btn btn-primary" id="header-connect-btn">
-      Connect Wallet
-    </button>
+    <button class="btn btn-primary" id="header-connect-btn">Connect Wallet</button>
   </div>
 </header>
 
-<!-- no overlay -->
-
-<!-- ── HERO ────────────────────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-eyebrow">
+  <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(124,109,244,0.1);border:1px solid rgba(124,109,244,0.25);border-radius:20px;padding:5px 14px;font-size:0.76rem;font-weight:600;color:var(--accent2);margin-bottom:1.4rem;">
     ⚡ Built on Stellar · Powered by Soroban Smart Contracts
   </div>
   <h1>Get paid.<br><span>No trust required.</span></h1>
-  <p class="hero-sub">
-    Freelancers get ghosted. Clients get scammed. FreelancePay locks funds on-chain
-    and releases them only when the work is done — no middleman, no disputes, no delays.
-  </p>
+  <p class="hero-sub">FreelancePay locks funds on-chain and releases them only when the work is done — no middleman, no disputes, no delays.</p>
   <div class="hero-cta">
     <a href="#app" class="btn btn-primary btn-lg">Launch App →</a>
-    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6"
-       target="_blank" class="btn btn-ghost btn-lg">View Contract ↗</a>
+    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6" target="_blank" class="btn btn-ghost btn-lg">View Contract ↗</a>
   </div>
 </section>
 
-<!-- ── PROBLEM VS SOLUTION ─────────────────────────────────────────────────── -->
-<div class="compare">
-  <div class="compare-card bad">
-    <div class="compare-label">❌ Without FreelancePay</div>
-    <div class="compare-item"><span class="compare-icon">😤</span> Client disappears after receiving work</div>
-    <div class="compare-item"><span class="compare-icon">💸</span> Freelancer pays with no guarantee of payment</div>
-    <div class="compare-item"><span class="compare-icon">🏦</span> PayPal/bank holds funds for 3–5 days</div>
-    <div class="compare-item"><span class="compare-icon">💰</span> High platform fees (5–20%)</div>
-    <div class="compare-item"><span class="compare-icon">🌍</span> Cross-border payments blocked or delayed</div>
-  </div>
-  <div class="compare-card good">
-    <div class="compare-label">✅ With FreelancePay</div>
-    <div class="compare-item"><span class="compare-icon">🔒</span> Funds locked on-chain before work begins</div>
-    <div class="compare-item"><span class="compare-icon">⚡</span> Payment released instantly on approval</div>
-    <div class="compare-item"><span class="compare-icon">🤝</span> Arbitrator resolves any dispute fairly</div>
-    <div class="compare-item"><span class="compare-icon">🪙</span> &lt;$0.001 per transaction</div>
-    <div class="compare-item"><span class="compare-icon">🌐</span> Works anywhere in the world, instantly</div>
-  </div>
-</div>
-
-<!-- ── HOW IT WORKS ────────────────────────────────────────────────────────── -->
-<section class="section" id="how">
-  <h2 class="section-title">How it works</h2>
-  <p class="section-sub">Three steps. Five seconds. Zero trust required.</p>
-
-  <div class="steps">
-    <div class="step-card">
-      <div class="step-num">💰</div>
-      <div class="step-title">1. Lock Funds</div>
-      <p class="step-desc">Client deposits XLM into the smart contract. Funds are visible on-chain — freelancer can verify before starting work.</p>
-      <div class="step-arrow">→</div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">🛠️</div>
-      <div class="step-title">2. Do the Work</div>
-      <p class="step-desc">Freelancer completes the project. Funds stay locked — nobody can touch them except through the contract rules.</p>
-      <div class="step-arrow">→</div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">✅</div>
-      <div class="step-title">3. Get Paid</div>
-      <p class="step-desc">Client approves → funds go to freelancer instantly. Dispute? The arbitrator decides. Cancel? Full refund.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ── WHY STELLAR ─────────────────────────────────────────────────────────── -->
-<section class="why-stellar">
-  <div class="section">
-    <h2 class="section-title">Why Stellar?</h2>
-    <p class="section-sub">Freelancers can't afford slow blockchains or high gas fees.</p>
-    <div class="why-grid">
-      <div class="why-item">
-        <div class="why-icon">⚡</div>
-        <div class="why-stat">5 sec</div>
-        <div class="why-label">Transaction finality</div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">💸</div>
-        <div class="why-stat">&lt;$0.001</div>
-        <div class="why-label">Per transaction</div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">🌍</div>
-        <div class="why-stat">Global</div>
-        <div class="why-label">Cross-border, no bank required</div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">🔒</div>
-        <div class="why-stat">Soroban</div>
-        <div class="why-label">Rust smart contracts, auditable</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── APP ────────────────────────────────────────────────────────────────── -->
 <section id="app">
-  <div style="max-width:980px;margin:0 auto;padding:3rem 2rem 5rem;">
-    <h2 class="section-title" style="margin-bottom:0.4rem;">Launch App</h2>
-    <p class="section-sub">Connect your Freighter wallet, then create or manage an escrow below.</p>
-
-    <!-- ── WALLET WIDGET (always visible, no blocking modal) ── -->
-    <div id="wallet-widget" class="card full" style="margin-bottom:1.5rem;">
-
-      <!-- NOT CONNECTED -->
-      <div id="w-disconnected">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-          <div style="flex:1;min-width:220px;">
-            <div style="font-weight:700;margin-bottom:4px;">🔐 Connect your Freighter wallet</div>
-            <div style="font-size:0.82rem;color:var(--muted2);">
-              Make sure Freighter is installed and set to <strong style="color:var(--yellow);">Testnet</strong>.
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="https://www.freighter.app/" target="_blank"
-               class="btn btn-ghost" style="font-size:0.85rem;">
-              Install Freighter ↗
-            </a>
-            <button class="btn btn-primary" id="connect-btn">
-              Connect Wallet
-            </button>
-          </div>
-        </div>
-        <!-- inline error -->
-        <div id="connect-error" style="display:none;margin-top:0.8rem;padding:10px 14px;
-          background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);
-          border-radius:8px;font-size:0.83rem;color:#fca5a5;line-height:1.5;"></div>
-      </div>
-
-      <!-- CONNECTED -->
-      <div id="w-connected" style="display:none;">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;">
-            <div class="dot-green"></div>
-            <div>
-              <div style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Connected</div>
-              <div id="w-addr" style="font-family:monospace;font-size:0.85rem;color:var(--text);"></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-success" style="font-size:0.85rem;" id="fund-btn">
-              💧 Get Free Testnet XLM
-            </button>
-          </div>
-        </div>
-        <div id="fund-msg" style="display:none;margin-top:0.7rem;padding:8px 14px;
-          border-radius:8px;font-size:0.82rem;line-height:1.5;"></div>
-      </div>
-
-    </div>
-
-    <!-- ── STATUS TRACKER ── -->
-    <div style="max-width:500px;margin:0 auto 2rem;">
-      <div class="tracker" id="tracker">
-        <div class="tracker-step">
-          <div class="tracker-dot" id="t1">1</div>
-          <div class="tracker-label">Connected</div>
-        </div>
-        <div class="tracker-line" id="tl1"></div>
-        <div class="tracker-step">
-          <div class="tracker-dot" id="t2">2</div>
-          <div class="tracker-label">Funds Locked</div>
-        </div>
-        <div class="tracker-line" id="tl2"></div>
-        <div class="tracker-step">
-          <div class="tracker-dot" id="t3">3</div>
-          <div class="tracker-label">Work Done</div>
-        </div>
-        <div class="tracker-line" id="tl3"></div>
-        <div class="tracker-step">
-          <div class="tracker-dot" id="t4">✓</div>
-          <div class="tracker-label">Settled</div>
-        </div>
-      </div>
-    </div>
+  <div class="section">
+    <h2 class="section-title">Launch App</h2>
+    <p class="section-sub">Connect your Freighter wallet to create or manage an escrow.</p>
 
     <div class="app-grid">
 
+      <!-- WALLET CARD -->
+      <div class="card full">
+        <div id="w-disconnected">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="font-weight:700;margin-bottom:4px;">🔐 Connect your Freighter wallet</div>
+              <div style="font-size:0.82rem;color:var(--muted2);">Make sure Freighter is installed and set to <strong style="color:var(--yellow);">Testnet</strong>.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <a href="https://www.freighter.app/" target="_blank" class="btn btn-ghost" style="font-size:0.84rem;">Install Freighter ↗</a>
+              <button class="btn btn-primary" id="connect-btn">Connect Wallet</button>
+            </div>
+          </div>
+          <div id="connect-error" class="alert alert-error"></div>
+        </div>
+        <div id="w-connected" style="display:none;">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;">
+              <div class="dot-green"></div>
+              <div>
+                <div style="font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Connected</div>
+                <div id="w-addr-full" style="font-family:monospace;font-size:0.82rem;color:var(--text);word-break:break-all;"></div>
+              </div>
+            </div>
+            <button class="btn btn-success" id="fund-btn" style="font-size:0.84rem;">💧 Get Free Testnet XLM</button>
+          </div>
+          <div id="fund-msg" class="alert"></div>
+        </div>
+      </div>
+
       <!-- CREATE ESCROW -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">Create Escrow</div>
-        </div>
-
+        <div class="card-title">Create Escrow</div>
         <div class="field">
-          <label>Your Address (Client) — auto-filled on connect</label>
-          <input id="client-addr" type="text" readonly placeholder="Connect wallet above first…" />
+          <label>Your Address (Client)</label>
+          <input id="client-addr" type="text" readonly placeholder="Connect wallet first…" />
         </div>
         <div class="field">
           <label>Freelancer Address</label>
           <input id="freelancer-addr" type="text" placeholder="G… (who receives payment)" />
         </div>
         <div class="field">
-          <label>Arbitrator Address <span style="color:var(--muted);font-weight:400;">(resolves disputes)</span></label>
+          <label>Arbitrator Address</label>
           <input id="arbitrator-addr" type="text" placeholder="G… (neutral third party)" />
         </div>
         <div class="field">
-          <label>Token Contract <span style="color:var(--muted);font-weight:400;">(XLM by default)</span></label>
-          <input id="token-addr" type="text"
-            value="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" />
+          <label>Token Contract (XLM by default)</label>
+          <input id="token-addr" type="text" value="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" />
         </div>
         <div class="field-row">
           <div class="field" style="margin:0;">
@@ -942,69 +192,45 @@
             <input id="deposit-amount" type="number" min="0.0000001" step="0.1" placeholder="e.g. 10" />
           </div>
           <div class="field" style="margin:0;">
-            <label>Deadline <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+            <label>Deadline (optional)</label>
             <input id="deadline" type="date" />
           </div>
         </div>
-
-        <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;"
-          id="deposit-btn">
-          Lock Funds in Escrow
-        </button>
+        <button class="btn btn-primary" id="deposit-btn" style="width:100%;margin-top:0.5rem;">Lock Funds in Escrow</button>
       </div>
 
       <!-- MANAGE ESCROW -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">Escrow Status</div>
-          <button class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem;"
-            id="refresh-btn">Refresh</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+          <div class="card-title" style="margin:0;">Escrow Status</div>
+          <button class="btn btn-ghost" id="refresh-btn" style="padding:5px 12px;font-size:0.76rem;">Refresh</button>
         </div>
-
         <div id="escrow-display">
-          <div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.88rem;">
-            No active escrow. Create one or click Refresh.
-          </div>
+          <div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.86rem;">No active escrow. Create one or click Refresh.</div>
         </div>
-
-        <div class="action-grid" style="margin-top:1.2rem;">
-          <button class="btn btn-success" id="release-btn">
-            ✅ Release Funds
-          </button>
-          <button class="btn btn-danger" id="cancel-btn">
-            ↩ Cancel &amp; Refund
-          </button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1.2rem;">
+          <button class="btn btn-success" id="release-btn">✅ Release Funds</button>
+          <button class="btn btn-danger" id="cancel-btn">↩ Cancel &amp; Refund</button>
         </div>
-
-        <div class="dispute-panel">
-          <div class="dispute-title">⚖️ Dispute Resolution</div>
-          <p style="font-size:0.8rem;color:var(--muted2);margin-bottom:0.8rem;line-height:1.5;">
-            If client and freelancer can't agree, the arbitrator resolves it.
-          </p>
+        <div style="background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:1rem;margin-top:1rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--yellow);margin-bottom:0.6rem;">⚖️ Dispute Resolution (Arbitrator only)</div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-orange" style="flex:1;font-size:0.82rem;"
-              id="resolve-freelancer-btn">
-              Pay Freelancer
-            </button>
-            <button class="btn btn-ghost" style="flex:1;font-size:0.82rem;"
-              id="resolve-client-btn">
-              Refund Client
-            </button>
+            <button class="btn btn-orange" id="resolve-freelancer-btn" style="flex:1;font-size:0.8rem;">Pay Freelancer</button>
+            <button class="btn btn-ghost" id="resolve-client-btn" style="flex:1;font-size:0.8rem;">Refund Client</button>
           </div>
         </div>
       </div>
 
       <!-- LOG -->
       <div class="card full">
-        <div class="card-header">
-          <div class="card-title">Transaction Log</div>
-          <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem;"
-            id="clear-log-btn">Clear</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="card-title" style="margin:0;">Transaction Log</div>
+          <button class="btn btn-ghost" id="clear-log-btn" style="padding:4px 10px;font-size:0.74rem;">Clear</button>
         </div>
         <ul id="log">
           <li class="log-entry info">
             <div class="log-time">Ready</div>
-            <div class="log-msg">Click "Connect Wallet" above. Freighter will ask you to approve — click Approve in the popup.</div>
+            <div class="log-msg">Click "Connect Wallet" to get started. Make sure Freighter is installed and set to Testnet.</div>
           </li>
         </ul>
       </div>
@@ -1013,159 +239,120 @@
   </div>
 </section>
 
-<!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
 <footer>
-  <p style="margin-bottom:0.5rem;">
-    <strong>FreelancePay</strong> — Trustless Escrow on Stellar &nbsp;·&nbsp;
-    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6"
-       target="_blank">View Contract on Stellar Expert ↗</a>
-    &nbsp;·&nbsp;
+  <p>FreelancePay · Built on <a href="https://stellar.org" target="_blank">Stellar</a> ·
+    <a href="https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6" target="_blank">View Contract ↗</a> ·
     <a href="https://github.com/rzlbautista/FreelancePay" target="_blank">GitHub ↗</a>
-  </p>
-  <p style="color:var(--muted);font-size:0.75rem;">
-    Built for the Stellar Bootcamp Hackathon · Contract:
-    <code style="color:var(--muted2);">CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6</code>
   </p>
 </footer>
 
-<!-- ── SCRIPT ─────────────────────────────────────────────────────────────── -->
 <script type="module">
 import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
 
+// ── Constants ────────────────────────────────────────────────────────────────
 const CONTRACT_ID  = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
 const RPC_URL      = 'https://soroban-testnet.stellar.org';
 const NETWORK_PASS = 'Test SDF Network ; September 2015';
 const EXPLORER_TX  = 'https://stellar.expert/explorer/testnet/tx/';
 const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
-// Fallback public account used for read-only simulations before wallet connect
-const DUMMY_ADDR   = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
 
 let publicKey = null;
-const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
+const server = new StellarSdk.SorobanRpc.Server(RPC_URL);
 
-// ── Connect Wallet ───────────────────────────────────────────────────────────
-// Uses window.freighter directly — no CDN import, no CORS/CSP issues.
-// The Freighter extension always injects window.freighter into every HTTPS page.
+// ── Freighter detection ───────────────────────────────────────────────────────
+async function waitForFreighter(ms = 4000) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (window.freighterApi || window.freighter) return true;
+    await new Promise(r => setTimeout(r, 150));
+  }
+  return false;
+}
 
-window.connectWallet = async function () {
+function getFreighter() {
+  return window.freighterApi ?? window.freighter ?? null;
+}
+
+// ── Connect Wallet ────────────────────────────────────────────────────────────
+async function connectWallet() {
   const btn = document.getElementById('connect-btn');
-  const hdr = document.getElementById('header-connect-btn');
+  const hdrBtn = document.getElementById('header-connect-btn');
+  const errEl = document.getElementById('connect-error');
 
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Connecting…';
-  document.getElementById('connect-error').style.display = 'none';
+  errEl.style.display = 'none';
 
   try {
-    // Wait up to 3 s for extension to inject (page may have just loaded)
-    await waitForFreighter(3000);
-
-    const freighter = window.freighterApi ?? window.freighter;
-
-    if (!freighter) {
-      showConnectError(
-        'Freighter extension not detected. ' +
-        'Make sure it is installed and ENABLED for this site, then refresh the page.'
-      );
+    const found = await waitForFreighter(4000);
+    if (!found) {
+      showError(errEl, 'Freighter not detected. Install the extension, enable it for this site, then refresh.');
       return;
     }
 
-    console.log('[FreelancePay] freighter detected:', Object.keys(freighter));
+    const f = getFreighter();
+    console.log('[FreelancePay] freighter keys:', Object.keys(f));
 
-    // --- Step 1: requestAccess ---
-    // This is the call that triggers the "Grant Access" popup.
-    if (typeof freighter.requestAccess === 'function') {
-      console.log('[FreelancePay] calling freighter.requestAccess()');
-      const result = await freighter.requestAccess();
-      if (result?.error) {
-        showConnectError('Freighter access denied. Click the Freighter icon in your toolbar and grant access to this site.');
+    // Request access (triggers the Freighter popup)
+    if (typeof f.requestAccess === 'function') {
+      const res = await f.requestAccess();
+      if (res?.error) {
+        showError(errEl, 'Access denied. Click the Freighter icon in your toolbar and grant access to this site.');
         return;
       }
-    } else {
-      console.log('[FreelancePay] requestAccess not found, skipping to getPublicKey');
     }
 
-    // --- Step 2: getPublicKey ---
-    console.log('[FreelancePay] calling freighter.getPublicKey()');
-    const pkResult = await freighter.getPublicKey();
-    console.log('[FreelancePay] getPublicKey result:', pkResult);
-
+    // Get public key
+    const pkResult = await f.getPublicKey();
     const pk = pkResult?.address ?? pkResult;
 
     if (!pk || typeof pk !== 'string' || pk.length < 50) {
-      showConnectError('Freighter returned no address. Make sure your wallet is unlocked and try again.');
+      showError(errEl, 'No address returned. Make sure your Freighter wallet is unlocked.');
       return;
     }
 
-    // --- Step 3: verify Testnet ---
+    // Verify testnet
     try {
-      const net = await freighter.getNetworkDetails();
-      console.log('[FreelancePay] network:', net);
-      const pass = net?.networkPassphrase ?? '';
-      if (pass && !pass.includes('Test SDF')) {
-        showConnectError(
-          'Wrong network! Open Freighter → click the network name at the top → select Testnet.'
-        );
+      const net = await f.getNetworkDetails();
+      if (net?.networkPassphrase && !net.networkPassphrase.includes('Test SDF')) {
+        showError(errEl, 'Wrong network! Open Freighter → click the network name → select Testnet.');
         return;
       }
-    } catch (_) { /* non-fatal if getNetworkDetails is unavailable */ }
+    } catch (_) { /* non-fatal */ }
 
-    // ✅ Success — update all UI
-    applyConnectedState(pk);
+    applyConnected(pk);
 
   } catch (e) {
     const msg = String(e?.message ?? e);
-    console.error('[FreelancePay] connectWallet error:', msg);
+    console.error('[FreelancePay] connect error:', msg);
     if (/declin|reject|cancel/i.test(msg)) {
-      showConnectError('You rejected the Freighter request. Click "Connect Wallet" and then Approve in the popup.');
+      showError(errEl, 'Request rejected. Click Connect Wallet and approve in the Freighter popup.');
     } else {
-      showConnectError('Could not connect: ' + msg);
+      showError(errEl, 'Could not connect: ' + msg);
     }
   } finally {
     if (!publicKey) {
       btn.disabled = false;
       btn.textContent = 'Connect Wallet';
-    } else {
-      btn.textContent = 'Connected ✓';
-      btn.disabled = true;
     }
   }
-};
+}
 
-function applyConnectedState(pk) {
+function applyConnected(pk) {
   publicKey = pk;
   document.getElementById('client-addr').value = pk;
-  document.getElementById('wallet-addr-display').textContent = pk.slice(0,6) + '…' + pk.slice(-4);
+  document.getElementById('w-addr-full').textContent = pk;
+  document.getElementById('wallet-addr-short').textContent = pk.slice(0,6) + '…' + pk.slice(-4);
   document.getElementById('wallet-chip').style.display = 'flex';
-  document.getElementById('header-connect-btn').textContent = 'Connected ✓';
+  document.getElementById('header-connect-btn').textContent = '✓ Connected';
   document.getElementById('header-connect-btn').disabled = true;
   document.getElementById('w-disconnected').style.display = 'none';
-  document.getElementById('w-addr').textContent = pk.slice(0,8) + '…' + pk.slice(-6);
   document.getElementById('w-connected').style.display = 'block';
-  setTracker(1);
   log('success', 'Wallet connected: ' + pk);
 }
 
-async function waitForFreighter(timeout) {
-  const end = Date.now() + timeout;
-  while (!window.freighterApi && !window.freighter && Date.now() < end) {
-    await new Promise(r => setTimeout(r, 150));
-  }
-}
-
-async function signTx(xdr) {
-  const freighter = window.freighterApi ?? window.freighter;
-  return freighter.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
-}
-
-function showConnectError(msg) {
-  const el = document.getElementById('connect-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-  log('error', msg);
-}
-
-// ── Friendbot ────────────────────────────────────────────────────────────────
-window.fundWallet = async function () {
+// ── Friendbot ─────────────────────────────────────────────────────────────────
+async function fundWallet() {
   if (!publicKey) return;
   const btn = document.getElementById('fund-btn');
   const msg = document.getElementById('fund-msg');
@@ -1175,272 +362,251 @@ window.fundWallet = async function () {
   msg.style.display = 'none';
 
   try {
-    const res  = await fetch(FRIENDBOT + publicKey);
+    const res = await fetch(FRIENDBOT + publicKey);
     const body = await res.json().catch(() => ({}));
 
     if (res.ok) {
-      btn.innerHTML = '✅ Funded! 10,000 XLM added.';
-      msg.style.cssText = 'display:block;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#6ee7b7;margin-top:0.5rem;';
-      msg.textContent = '10,000 testnet XLM added to your wallet. You can now create escrows!';
+      btn.textContent = '✅ Funded!';
+      showAlert(msg, 'success', '10,000 testnet XLM added to your wallet!');
       log('success', 'Wallet funded with 10,000 testnet XLM!');
     } else if (res.status === 400 || String(body?.detail).includes('already')) {
-      btn.innerHTML = '✅ Already funded!';
-      msg.style.cssText = 'display:block;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#6ee7b7;margin-top:0.5rem;';
-      msg.textContent = 'Your wallet already has testnet XLM. You are ready to go!';
+      btn.textContent = '✅ Already funded';
+      showAlert(msg, 'success', 'Your wallet already has testnet XLM. You are ready to go!');
     } else {
       btn.disabled = false;
-      btn.textContent = '💧 Get Free Testnet XLM (retry)';
-      msg.style.cssText = 'display:block;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#fca5a5;margin-top:0.5rem;';
-      msg.textContent = 'Friendbot error: ' + (body?.detail ?? res.status) + '. Try again.';
+      btn.textContent = '💧 Get Free Testnet XLM';
+      showAlert(msg, 'error', 'Friendbot error: ' + (body?.detail ?? res.status));
     }
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = '💧 Get Free Testnet XLM (retry)';
-    msg.style.cssText = 'display:block;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:8px 12px;font-size:0.82rem;color:#fca5a5;margin-top:0.5rem;';
-    msg.textContent = 'Could not reach Friendbot. Check your internet connection and try again.';
+    btn.textContent = '💧 Get Free Testnet XLM';
+    showAlert(msg, 'error', 'Could not reach Friendbot. Check your connection.');
   }
-};
+}
 
-// ── Core invoke ─────────────────────────────────────────────────────────────
-async function invoke(method, args, btnId) {
+// ── Sign & submit transaction ─────────────────────────────────────────────────
+async function signAndSend(tx) {
+  const f = getFreighter();
+  if (!f) throw new Error('Freighter not available');
+
+  const prepared = await server.prepareTransaction(tx);
+  const xdr = prepared.toXDR();
+
+  let signedXdr;
+  // Support both old and new Freighter API shapes
+  if (typeof f.signTransaction === 'function') {
+    const result = await f.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+    signedXdr = result?.signedTxXdr ?? result;
+  } else {
+    throw new Error('signTransaction not available in Freighter');
+  }
+
+  const signed = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASS);
+  const sendResult = await server.sendTransaction(signed);
+
+  if (sendResult.status === 'ERROR') {
+    throw new Error('Transaction failed: ' + JSON.stringify(sendResult.errorResult));
+  }
+
+  // Poll for confirmation
+  let hash = sendResult.hash;
+  for (let i = 0; i < 20; i++) {
+    await sleep(1500);
+    const status = await server.getTransaction(hash);
+    if (status.status === 'SUCCESS') return hash;
+    if (status.status === 'FAILED') throw new Error('Transaction failed on-chain');
+  }
+  throw new Error('Transaction timed out');
+}
+
+// ── Contract calls ────────────────────────────────────────────────────────────
+async function callDeposit() {
   if (!publicKey) { log('error', 'Connect wallet first.'); return; }
 
-  const btn = document.getElementById(btnId);
-  const orig = btn.innerHTML;
+  const freelancer = document.getElementById('freelancer-addr').value.trim();
+  const arbitrator = document.getElementById('arbitrator-addr').value.trim();
+  const token      = document.getElementById('token-addr').value.trim();
+  const amountXlm  = parseFloat(document.getElementById('deposit-amount').value);
+  const deadlineVal = document.getElementById('deadline').value;
+
+  if (!freelancer || !arbitrator || !token || !amountXlm) {
+    log('error', 'Fill in all fields before locking funds.'); return;
+  }
+
+  const amount   = BigInt(Math.round(amountXlm * 10_000_000));
+  const deadline = deadlineVal ? BigInt(Math.floor(new Date(deadlineVal).getTime() / 1000)) : 0n;
+
+  const btn = document.getElementById('deposit-btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Processing…';
+  btn.innerHTML = '<span class="spin"></span> Locking funds…';
 
   try {
     const account  = await server.getAccount(publicKey);
     const contract = new StellarSdk.Contract(CONTRACT_ID);
-
-    const tx = new StellarSdk.TransactionBuilder(account, {
-      fee: '100000',
-      networkPassphrase: NETWORK_PASS,
-    })
-      .addOperation(contract.call(method, ...args))
-      .setTimeout(30)
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: '1000000', networkPassphrase: NETWORK_PASS })
+      .addOperation(contract.call('deposit',
+        StellarSdk.nativeToScVal(publicKey,   { type: 'address' }),
+        StellarSdk.nativeToScVal(freelancer,  { type: 'address' }),
+        StellarSdk.nativeToScVal(arbitrator,  { type: 'address' }),
+        StellarSdk.nativeToScVal(token,       { type: 'address' }),
+        StellarSdk.nativeToScVal(amount,      { type: 'i128' }),
+        StellarSdk.nativeToScVal(deadline,    { type: 'u64' }),
+      ))
+      .setTimeout(60)
       .build();
 
-    const sim = await server.simulateTransaction(tx);
-    if (StellarSdk.SorobanRpc.isSimulationError(sim)) {
-      throw new Error('Simulation: ' + sim.error);
-    }
-
-    let prep = StellarSdk.SorobanRpc.assembleTransaction(tx, sim);
-    if (typeof prep.build === 'function') prep = prep.build();
-
-    const signedXDR = await signTx(prep.toXDR());
-    const signedTx  = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASS);
-    const sent      = await server.sendTransaction(signedTx);
-
-    if (sent.status === 'ERROR') throw new Error(JSON.stringify(sent.errorResult));
-
-    log('info', `${method} submitted — confirming…`, sent.hash);
-
-    let result; let tries = 0;
-    do {
-      await sleep(2000);
-      result = await server.getTransaction(sent.hash);
-      tries++;
-    } while (result.status === 'NOT_FOUND' && tries < 15);
-
-    if (result.status !== 'SUCCESS') throw new Error('On-chain status: ' + result.status);
-
-    log('success', `${method} confirmed!`, sent.hash);
-    return result;
+    const hash = await signAndSend(tx);
+    log('success', `Funds locked! ${amountXlm} XLM in escrow.`, hash);
+    await callGetEscrow();
   } catch (e) {
-    log('error', method + ' failed: ' + e.message);
-    throw e;
+    log('error', 'Deposit failed: ' + (e?.message ?? e));
   } finally {
     btn.disabled = false;
-    btn.innerHTML = orig;
+    btn.textContent = 'Lock Funds in Escrow';
   }
 }
 
-// ── Contract functions ───────────────────────────────────────────────────────
-window.callDeposit = async function () {
-  const client     = document.getElementById('client-addr').value.trim();
-  const freelancer = document.getElementById('freelancer-addr').value.trim();
-  const arbitrator = document.getElementById('arbitrator-addr').value.trim();
-  const token      = document.getElementById('token-addr').value.trim();
-  const xlm        = parseFloat(document.getElementById('deposit-amount').value);
-  const dateVal    = document.getElementById('deadline').value;
-
-  if (!client || !freelancer || !arbitrator || !token || isNaN(xlm) || xlm <= 0) {
-    log('error', 'Please fill in all fields (client, freelancer, arbitrator, token, amount).');
-    return;
-  }
-
-  const stroops  = BigInt(Math.round(xlm * 10_000_000));
-  const deadline = dateVal
-    ? BigInt(Math.floor(new Date(dateVal).getTime() / 1000))
-    : BigInt(0);
-
-  await invoke('deposit', [
-    addr(client),
-    addr(freelancer),
-    addr(arbitrator),
-    addr(token),
-    i128(stroops),
-    u64(deadline),
-  ], 'deposit-btn');
-
-  setTracker(2);
-  await callGetEscrow();
-};
-
-window.callRelease = async function () {
-  const caller = document.getElementById('client-addr').value.trim();
-  if (!caller) { log('error', 'Connect wallet first.'); return; }
-  await invoke('release', [addr(caller)], 'release-btn');
-  setTracker(4);
-  renderEscrowEmpty();
-};
-
-window.callCancel = async function () {
-  const caller = document.getElementById('client-addr').value.trim();
-  if (!caller) { log('error', 'Connect wallet first.'); return; }
-  await invoke('cancel', [addr(caller)], 'cancel-btn');
-  setTracker(1);
-  renderEscrowEmpty();
-};
-
-window.callResolve = async function (payFreelancer) {
-  const caller = publicKey;
-  if (!caller) { log('error', 'Connect wallet first.'); return; }
-  const btnId = payFreelancer ? 'resolve-freelancer-btn' : 'resolve-client-btn';
-  await invoke('resolve', [
-    addr(caller),
-    StellarSdk.nativeToScVal(payFreelancer, { type: 'bool' }),
-  ], btnId);
-  setTracker(4);
-  renderEscrowEmpty();
-};
-
-window.callGetEscrow = async function () {
+async function callRelease() {
+  if (!publicKey) { log('error', 'Connect wallet first.'); return; }
+  const btn = document.getElementById('release-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Releasing…';
   try {
-    const refAddr  = publicKey || 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
+    const account  = await server.getAccount(publicKey);
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: '1000000', networkPassphrase: NETWORK_PASS })
+      .addOperation(contract.call('release', StellarSdk.nativeToScVal(publicKey, { type: 'address' })))
+      .setTimeout(60).build();
+    const hash = await signAndSend(tx);
+    log('success', 'Funds released to freelancer!', hash);
+    renderEscrowEmpty();
+  } catch (e) {
+    log('error', 'Release failed: ' + (e?.message ?? e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Release Funds';
+  }
+}
+
+async function callCancel() {
+  if (!publicKey) { log('error', 'Connect wallet first.'); return; }
+  const btn = document.getElementById('cancel-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Cancelling…';
+  try {
+    const account  = await server.getAccount(publicKey);
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: '1000000', networkPassphrase: NETWORK_PASS })
+      .addOperation(contract.call('cancel', StellarSdk.nativeToScVal(publicKey, { type: 'address' })))
+      .setTimeout(60).build();
+    const hash = await signAndSend(tx);
+    log('success', 'Escrow cancelled. Funds refunded to client.', hash);
+    renderEscrowEmpty();
+  } catch (e) {
+    log('error', 'Cancel failed: ' + (e?.message ?? e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↩ Cancel & Refund';
+  }
+}
+
+async function callResolve(payFreelancer) {
+  if (!publicKey) { log('error', 'Connect wallet first.'); return; }
+  const btnId = payFreelancer ? 'resolve-freelancer-btn' : 'resolve-client-btn';
+  const btn = document.getElementById(btnId);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const account  = await server.getAccount(publicKey);
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: '1000000', networkPassphrase: NETWORK_PASS })
+      .addOperation(contract.call('resolve',
+        StellarSdk.nativeToScVal(publicKey, { type: 'address' }),
+        StellarSdk.nativeToScVal(payFreelancer, { type: 'bool' }),
+      ))
+      .setTimeout(60).build();
+    const hash = await signAndSend(tx);
+    log('success', `Dispute resolved. Funds sent to ${payFreelancer ? 'freelancer' : 'client'}.`, hash);
+    renderEscrowEmpty();
+  } catch (e) {
+    log('error', 'Resolve failed: ' + (e?.message ?? e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = payFreelancer ? 'Pay Freelancer' : 'Refund Client';
+  }
+}
+
+async function callGetEscrow() {
+  try {
+    const refAddr = publicKey || 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
     const account  = await server.getAccount(refAddr);
     const contract = new StellarSdk.Contract(CONTRACT_ID);
-
-    const tx = new StellarSdk.TransactionBuilder(account, {
-      fee: '1000', networkPassphrase: NETWORK_PASS,
-    })
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: '1000', networkPassphrase: NETWORK_PASS })
       .addOperation(contract.call('get_escrow'))
-      .setTimeout(30)
-      .build();
-
+      .setTimeout(30).build();
     const sim = await server.simulateTransaction(tx);
     if (StellarSdk.SorobanRpc.isSimulationError(sim)) { renderEscrowEmpty(); return; }
-
     const retval = sim.result?.retval;
     if (!retval) { renderEscrowEmpty(); return; }
-
-    const e = StellarSdk.scValToNative(retval);
-    renderEscrow(e);
-    setTracker(2);
-  } catch (e) {
-    log('error', 'get_escrow: ' + e.message);
+    renderEscrow(StellarSdk.scValToNative(retval));
+  } catch (_) {
+    renderEscrowEmpty();
   }
-};
+}
 
-// ── UI helpers ───────────────────────────────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────────────────────────
 function renderEscrow(e) {
-  const xlm      = (Number(e.amount) / 10_000_000).toFixed(7);
-  const deadline = e.deadline && Number(e.deadline) > 0
-    ? new Date(Number(e.deadline) * 1000).toLocaleDateString()
-    : 'None';
-
+  const xlm = (Number(e.amount) / 10_000_000).toFixed(7);
+  const dl  = e.deadline ? new Date(Number(e.deadline) * 1000).toLocaleDateString() : 'None';
   document.getElementById('escrow-display').innerHTML = `
-    <div class="escrow-row">
-      <span class="escrow-key">Status</span>
-      <span class="status-pill pill-active">Active</span>
-    </div>
-    <div class="escrow-row">
-      <span class="escrow-key">Amount</span>
-      <span class="escrow-amount-big">${xlm} XLM</span>
-    </div>
-    <div class="escrow-row">
-      <span class="escrow-key">Client</span>
-      <span class="escrow-val">${e.client}</span>
-    </div>
-    <div class="escrow-row">
-      <span class="escrow-key">Freelancer</span>
-      <span class="escrow-val">${e.freelancer}</span>
-    </div>
-    <div class="escrow-row">
-      <span class="escrow-key">Arbitrator</span>
-      <span class="escrow-val">${e.arbitrator}</span>
-    </div>
-    <div class="escrow-row">
-      <span class="escrow-key">Deadline</span>
-      <span class="escrow-val" style="color:var(--text);">${deadline}</span>
-    </div>
+    <div class="escrow-row"><span class="escrow-key">Status</span><span class="pill pill-active">Active</span></div>
+    <div class="escrow-row"><span class="escrow-key">Amount</span><span class="escrow-val" style="color:var(--green);font-size:1.1rem;font-weight:800;">${xlm} XLM</span></div>
+    <div class="escrow-row"><span class="escrow-key">Client</span><span class="escrow-val">${String(e.client).slice(0,8)}…${String(e.client).slice(-6)}</span></div>
+    <div class="escrow-row"><span class="escrow-key">Freelancer</span><span class="escrow-val">${String(e.freelancer).slice(0,8)}…${String(e.freelancer).slice(-6)}</span></div>
+    <div class="escrow-row"><span class="escrow-key">Arbitrator</span><span class="escrow-val">${String(e.arbitrator).slice(0,8)}…${String(e.arbitrator).slice(-6)}</span></div>
+    <div class="escrow-row"><span class="escrow-key">Deadline</span><span class="escrow-val">${dl}</span></div>
   `;
 }
 
 function renderEscrowEmpty() {
-  document.getElementById('escrow-display').innerHTML = `
-    <div class="escrow-row">
-      <span class="escrow-key">Status</span>
-      <span class="status-pill pill-none">No Active Escrow</span>
-    </div>
-  `;
-}
-
-function setTracker(step) {
-  // step: 1=connected, 2=funded, 3=work done, 4=settled
-  const dots  = ['t1','t2','t3','t4'];
-  const lines = ['tl1','tl2','tl3'];
-  dots.forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.className = 'tracker-dot';
-    if (i + 1 < step)       el.classList.add('done');
-    else if (i + 1 === step) el.classList.add('active');
-  });
-  lines.forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.className = 'tracker-line';
-    if (i + 1 < step) el.classList.add('done');
-  });
+  document.getElementById('escrow-display').innerHTML =
+    '<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.86rem;">No active escrow.</div>';
 }
 
 function log(type, msg, txHash) {
   const ul = document.getElementById('log');
   const li = document.createElement('li');
   li.className = 'log-entry ' + type;
-
   const time = new Date().toLocaleTimeString();
   let html = `<div class="log-time">${time}</div><div class="log-msg">${msg}</div>`;
-  if (txHash) {
-    html += `<a class="tx-link" href="${EXPLORER_TX}${txHash}" target="_blank">
-      View on Stellar Expert →
-    </a>`;
-  }
+  if (txHash) html += `<a class="tx-link" href="${EXPLORER_TX}${txHash}" target="_blank">View on Stellar Expert →</a>`;
   li.innerHTML = html;
   ul.prepend(li);
 }
 
-// ── ScVal helpers ────────────────────────────────────────────────────────────
-function addr(str) { return StellarSdk.nativeToScVal(str, { type: 'address' }); }
-function i128(n)   { return StellarSdk.nativeToScVal(n, { type: 'i128' }); }
-function u64(n)    { return StellarSdk.nativeToScVal(n, { type: 'u64' }); }
+function showError(el, msg) {
+  el.textContent = msg;
+  el.className = 'alert alert-error';
+  el.style.display = 'block';
+  log('error', msg);
+}
+
+function showAlert(el, type, msg) {
+  el.textContent = msg;
+  el.className = 'alert alert-' + type;
+  el.style.display = 'block';
+}
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-window.hideBanner = function() {}; // no-op, kept for safety
-
-// ── Wire up all button event listeners ───────────────────────────────────────
-// Using addEventListener instead of inline onclick so module-scoped functions
-// are guaranteed to exist before any click can fire.
-document.getElementById('connect-btn').addEventListener('click', () => connectWallet());
-document.getElementById('header-connect-btn').addEventListener('click', () => connectWallet());
-document.getElementById('fund-btn').addEventListener('click', () => fundWallet());
-document.getElementById('deposit-btn').addEventListener('click', () => callDeposit());
-document.getElementById('refresh-btn').addEventListener('click', () => callGetEscrow());
-document.getElementById('release-btn').addEventListener('click', () => callRelease());
-document.getElementById('cancel-btn').addEventListener('click', () => callCancel());
+// ── Wire up buttons ───────────────────────────────────────────────────────────
+document.getElementById('connect-btn').addEventListener('click', connectWallet);
+document.getElementById('header-connect-btn').addEventListener('click', connectWallet);
+document.getElementById('fund-btn').addEventListener('click', fundWallet);
+document.getElementById('deposit-btn').addEventListener('click', callDeposit);
+document.getElementById('refresh-btn').addEventListener('click', callGetEscrow);
+document.getElementById('release-btn').addEventListener('click', callRelease);
+document.getElementById('cancel-btn').addEventListener('click', callCancel);
 document.getElementById('resolve-freelancer-btn').addEventListener('click', () => callResolve(true));
 document.getElementById('resolve-client-btn').addEventListener('click', () => callResolve(false));
 document.getElementById('clear-log-btn').addEventListener('click', () => { document.getElementById('log').innerHTML = ''; });
