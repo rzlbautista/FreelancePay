@@ -248,6 +248,14 @@
 
 <script type="module">
 import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
+import {
+  isConnected,
+  isAllowed,
+  setAllowed,
+  getAddress,
+  getNetworkDetails,
+  signTransaction,
+} from 'https://esm.sh/@stellar/freighter-api@5';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CONTRACT_ID  = 'CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6';
@@ -259,24 +267,9 @@ const FRIENDBOT    = 'https://friendbot.stellar.org/?addr=';
 let publicKey = null;
 const server = new StellarSdk.SorobanRpc.Server(RPC_URL);
 
-// ── Freighter detection ───────────────────────────────────────────────────────
-async function waitForFreighter(ms = 4000) {
-  const end = Date.now() + ms;
-  while (Date.now() < end) {
-    if (window.freighterApi || window.freighter) return true;
-    await new Promise(r => setTimeout(r, 150));
-  }
-  return false;
-}
-
-function getFreighter() {
-  return window.freighterApi ?? window.freighter ?? null;
-}
-
-// ── Connect Wallet ────────────────────────────────────────────────────────────
+// ── Connect Wallet (official @stellar/freighter-api) ─────────────────────────
 async function connectWallet() {
-  const btn = document.getElementById('connect-btn');
-  const hdrBtn = document.getElementById('header-connect-btn');
+  const btn   = document.getElementById('connect-btn');
   const errEl = document.getElementById('connect-error');
 
   btn.disabled = true;
@@ -284,41 +277,38 @@ async function connectWallet() {
   errEl.style.display = 'none';
 
   try {
-    const found = await waitForFreighter(4000);
-    if (!found) {
-      showError(errEl, 'Freighter not detected. Install the extension, enable it for this site, then refresh.');
+    // 1. Check extension is installed
+    const connResult = await isConnected();
+    if (!connResult?.isConnected) {
+      showError(errEl, 'Freighter not found. Install it from freighter.app, enable it for this site, then refresh.');
       return;
     }
 
-    const f = getFreighter();
-    console.log('[FreelancePay] freighter keys:', Object.keys(f));
-
-    // Request access (triggers the Freighter popup)
-    if (typeof f.requestAccess === 'function') {
-      const res = await f.requestAccess();
-      if (res?.error) {
-        showError(errEl, 'Access denied. Click the Freighter icon in your toolbar and grant access to this site.');
-        return;
-      }
+    // 2. Request site permission (triggers the Freighter popup)
+    const allowResult = await setAllowed();
+    if (!allowResult?.isAllowed) {
+      showError(errEl, 'Access denied. Click the Freighter icon in your toolbar and grant access to this site.');
+      return;
     }
 
-    // Get public key
-    const pkResult = await f.getPublicKey();
-    const pk = pkResult?.address ?? pkResult;
-
-    if (!pk || typeof pk !== 'string' || pk.length < 50) {
+    // 3. Get public key
+    const addrResult = await getAddress();
+    if (addrResult?.error) {
+      showError(errEl, 'Could not get address: ' + addrResult.error);
+      return;
+    }
+    const pk = addrResult?.address;
+    if (!pk || pk.length < 50) {
       showError(errEl, 'No address returned. Make sure your Freighter wallet is unlocked.');
       return;
     }
 
-    // Verify testnet
-    try {
-      const net = await f.getNetworkDetails();
-      if (net?.networkPassphrase && !net.networkPassphrase.includes('Test SDF')) {
-        showError(errEl, 'Wrong network! Open Freighter → click the network name → select Testnet.');
-        return;
-      }
-    } catch (_) { /* non-fatal */ }
+    // 4. Verify testnet
+    const net = await getNetworkDetails();
+    if (net?.networkPassphrase && !net.networkPassphrase.includes('Test SDF')) {
+      showError(errEl, 'Wrong network! Open Freighter → click the network name → select Testnet.');
+      return;
+    }
 
     applyConnected(pk);
 
@@ -386,20 +376,12 @@ async function fundWallet() {
 
 // ── Sign & submit transaction ─────────────────────────────────────────────────
 async function signAndSend(tx) {
-  const f = getFreighter();
-  if (!f) throw new Error('Freighter not available');
-
   const prepared = await server.prepareTransaction(tx);
   const xdr = prepared.toXDR();
 
-  let signedXdr;
-  // Support both old and new Freighter API shapes
-  if (typeof f.signTransaction === 'function') {
-    const result = await f.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
-    signedXdr = result?.signedTxXdr ?? result;
-  } else {
-    throw new Error('signTransaction not available in Freighter');
-  }
+  // Uses official @stellar/freighter-api signTransaction
+  const result = await signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+  const signedXdr = result?.signedTxXdr ?? result;
 
   const signed = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASS);
   const sendResult = await server.sendTransaction(signed);
@@ -408,8 +390,7 @@ async function signAndSend(tx) {
     throw new Error('Transaction failed: ' + JSON.stringify(sendResult.errorResult));
   }
 
-  // Poll for confirmation
-  let hash = sendResult.hash;
+  const hash = sendResult.hash;
   for (let i = 0; i < 20; i++) {
     await sleep(1500);
     const status = await server.getTransaction(hash);
