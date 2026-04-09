@@ -707,6 +707,16 @@
   </div>
 </header>
 
+<!-- ── ERROR BANNER ──────────────────────────────────────────────────────────── -->
+<div id="banner" style="display:none;position:fixed;top:64px;left:0;right:0;z-index:300;
+  padding:12px 2rem;font-size:0.88rem;font-weight:500;text-align:center;
+  background:rgba(248,113,113,0.12);border-bottom:1px solid rgba(248,113,113,0.3);
+  color:#fca5a5;backdrop-filter:blur(8px);">
+  <span id="banner-msg"></span>
+  <a id="banner-link" href="#" target="_blank" style="color:#f87171;margin-left:8px;font-weight:700;display:none;">→ Fix it</a>
+  <button onclick="hideBanner()" style="float:right;background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;">✕</button>
+</div>
+
 <!-- ── CONNECT OVERLAY ─────────────────────────────────────────────────────── -->
 <div id="connect-overlay">
   <div class="connect-box" style="position:relative;">
@@ -982,6 +992,7 @@ import * as StellarSdk from 'https://esm.sh/@stellar/stellar-sdk@12';
 import {
   isConnected,
   getPublicKey,
+  requestAccess,
   signTransaction,
   getNetworkDetails,
 } from 'https://esm.sh/@stellar/freighter-api@3';
@@ -991,35 +1002,66 @@ const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
 
 // ── Wallet ──────────────────────────────────────────────────────────────────
 window.connectWallet = async function () {
+  const btn = document.getElementById('header-connect-btn');
+  const overlayBtn = document.querySelector('#connect-overlay .btn-primary');
+  [btn, overlayBtn].forEach(b => { if (b) { b.disabled = true; b.innerHTML = '<span class="spin"></span> Connecting…'; } });
+
   try {
-    const ok = await isConnected();
-    if (!ok) {
-      log('error', 'Freighter not detected. Please install the Freighter extension.');
-      window.open('https://www.freighter.app/', '_blank');
+    // Step 1: check Freighter is installed
+    // freighter-api v3 returns { isConnected: bool }, v1-2 returns bool — handle both
+    const connRes = await isConnected();
+    const hasFreighter = typeof connRes === 'object' ? connRes.isConnected : !!connRes;
+
+    if (!hasFreighter) {
+      showBanner('error', '🦊 Freighter not found. Install the Freighter browser extension first, then refresh this page.', 'https://www.freighter.app/');
       return;
     }
 
-    const net = await getNetworkDetails();
-    if (!net.networkPassphrase.includes('Test SDF')) {
-      log('error', 'Please switch Freighter to Stellar Testnet and try again.');
+    // Step 2: request access — this opens the Freighter approval popup
+    const accessRes = await requestAccess();
+    if (accessRes?.error) {
+      showBanner('error', '❌ Access denied: ' + accessRes.error);
       return;
     }
 
-    publicKey = await getPublicKey();
+    // Step 3: verify network is testnet
+    const netRes = await getNetworkDetails();
+    const passphrase = netRes?.networkPassphrase ?? netRes;
+    if (!String(passphrase).includes('Test SDF')) {
+      showBanner('error', '⚠️ Wrong network! Open Freighter → Settings → Network → select Testnet, then try again.');
+      return;
+    }
+
+    // Step 4: get public key
+    // freighter-api v3 might return { publicKey } or a plain string
+    const pkRes = await getPublicKey();
+    publicKey = typeof pkRes === 'object' ? (pkRes.publicKey ?? pkRes) : pkRes;
+
+    if (!publicKey || publicKey.length < 50) {
+      showBanner('error', '❌ Could not read wallet address. Make sure Freighter is unlocked.');
+      return;
+    }
 
     // Update UI
     document.getElementById('client-addr').value = publicKey;
     document.getElementById('wallet-addr-display').textContent =
       publicKey.slice(0,6) + '…' + publicKey.slice(-4);
     document.getElementById('wallet-chip').style.display = 'flex';
-    document.getElementById('header-connect-btn').textContent = 'Connected';
-    document.getElementById('header-connect-btn').disabled = true;
+    btn.textContent = 'Connected';
+    btn.disabled = true;
     document.getElementById('connect-overlay').style.display = 'none';
+    hideBanner();
 
     setTracker(1);
     log('success', `Wallet connected: ${publicKey}`);
   } catch (e) {
-    log('error', 'Connection failed: ' + e.message);
+    showBanner('error', '❌ ' + (e.message || 'Unknown error. Is Freighter installed and unlocked?'));
+  } finally {
+    // Re-enable overlay button if still visible
+    if (overlayBtn && !publicKey) {
+      overlayBtn.disabled = false;
+      overlayBtn.innerHTML = 'Connect Freighter';
+    }
   }
 };
 
@@ -1250,6 +1292,26 @@ function i128(n)   { return StellarSdk.nativeToScVal(n, { type: 'i128' }); }
 function u64(n)    { return StellarSdk.nativeToScVal(n, { type: 'u64' }); }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Banner ───────────────────────────────────────────────────────────────────
+window.showBanner = function(type, msg, link) {
+  const el  = document.getElementById('banner');
+  const lnk = document.getElementById('banner-link');
+  document.getElementById('banner-msg').textContent = msg;
+  el.style.background = type === 'error'
+    ? 'rgba(248,113,113,0.12)' : 'rgba(52,211,153,0.1)';
+  el.style.borderBottomColor = type === 'error'
+    ? 'rgba(248,113,113,0.3)' : 'rgba(52,211,153,0.25)';
+  el.style.color = type === 'error' ? '#fca5a5' : '#6ee7b7';
+  if (link) { lnk.href = link; lnk.style.display = 'inline'; }
+  else       { lnk.style.display = 'none'; }
+  el.style.display = 'block';
+  log(type, msg);
+};
+
+window.hideBanner = function() {
+  document.getElementById('banner').style.display = 'none';
+};
 </script>
 </body>
 </html>
