@@ -1047,48 +1047,55 @@ const server  = new StellarSdk.SorobanRpc.Server(RPC_URL);
 window.connectWallet = async function () {
   const btn = document.getElementById('connect-btn');
   const hdr = document.getElementById('header-connect-btn');
-  const err = document.getElementById('connect-error');
 
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Connecting…';
-  err.style.display = 'none';
+  document.getElementById('connect-error').style.display = 'none';
 
   try {
-    // Check Freighter extension is injected
-    if (!window.freighter) {
-      showConnectError('Freighter extension not found. Install it at freighter.app, then refresh this page.');
+    // Dynamically import freighter-api v2 — requestAccess() is the call
+    // that actually opens the Freighter approval popup in newer extension versions.
+    const fapi = await import('https://esm.sh/@stellar/freighter-api@2');
+
+    // isConnected() tells us if the extension is installed at all
+    const connected = await fapi.isConnected();
+    if (!connected) {
+      showConnectError('Freighter extension not detected. Install it at freighter.app and refresh this page.');
       return;
     }
 
-    // getPublicKey() opens the Freighter popup — user clicks Approve inside it
-    const pk = await window.freighter.getPublicKey();
+    // requestAccess() — THIS is what opens the Freighter popup asking "Grant Access?"
+    const accessError = await fapi.requestAccess();
+    if (accessError) {
+      // User clicked Reject, or access was already denied
+      showConnectError('Access was denied in Freighter. Open the Freighter extension, click the site name, and choose "Grant Access".');
+      return;
+    }
 
+    // Now getPublicKey() returns the address without any popup
+    const pk = await fapi.getPublicKey();
     if (!pk || pk.length < 50) {
-      showConnectError('No address returned. Make sure your Freighter wallet is unlocked.');
+      showConnectError('Could not read wallet address. Make sure Freighter is unlocked and try again.');
       return;
     }
 
-    // Verify network is testnet
+    // Verify testnet
     try {
-      const net = await window.freighter.getNetworkDetails();
+      const net = await fapi.getNetworkDetails();
       const pass = net?.networkPassphrase ?? '';
       if (pass && !pass.includes('Test SDF')) {
-        showConnectError('Wrong network detected. In Freighter: tap the network name at top → choose Testnet.');
+        showConnectError('Wrong network! In Freighter: click the network name at the top → select Testnet.');
         return;
       }
-    } catch (_) { /* network check optional */ }
+    } catch (_) { /* non-fatal */ }
 
-    // ✅ Success
+    // ✅ Connected
     publicKey = pk;
     document.getElementById('client-addr').value = pk;
-
-    // Header chip
     document.getElementById('wallet-addr-display').textContent = pk.slice(0,6) + '…' + pk.slice(-4);
     document.getElementById('wallet-chip').style.display = 'flex';
     hdr.textContent = 'Connected ✓';
     hdr.disabled = true;
-
-    // Swap wallet widget state
     document.getElementById('w-disconnected').style.display = 'none';
     document.getElementById('w-addr').textContent = pk.slice(0,8) + '…' + pk.slice(-6);
     document.getElementById('w-connected').style.display = 'block';
@@ -1098,20 +1105,63 @@ window.connectWallet = async function () {
 
   } catch (e) {
     const msg = String(e?.message ?? e);
-    if (/declin|reject|cancel/i.test(msg)) {
-      showConnectError('You dismissed the Freighter popup. Click "Connect Wallet" again and then click Approve in the popup.');
+    if (/declin|reject|cancel|denied/i.test(msg)) {
+      showConnectError('You rejected the Freighter request. Try again and click "Approve" in the Freighter popup.');
+    } else if (/load|fetch|network|import/i.test(msg)) {
+      // CDN failed — fall back to window.freighter directly
+      await connectViaWindowFreighter();
     } else {
-      showConnectError('Error: ' + msg);
+      showConnectError('Error: ' + msg + ' — Try opening the Freighter extension manually and clicking Connect.');
     }
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Connect Wallet';
-    if (publicKey) {
+    if (!publicKey) {
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+    } else {
       btn.textContent = 'Connected ✓';
       btn.disabled = true;
     }
   }
 };
+
+// Fallback: use window.freighter if the CDN import fails
+async function connectViaWindowFreighter() {
+  if (!window.freighter) {
+    showConnectError('Freighter not found. Install the extension from freighter.app and refresh.');
+    return;
+  }
+  try {
+    const pk = await window.freighter.getPublicKey();
+    if (!pk || pk.length < 50) {
+      showConnectError('No address returned. Unlock Freighter and try again.');
+      return;
+    }
+    publicKey = pk;
+    document.getElementById('client-addr').value = pk;
+    document.getElementById('wallet-addr-display').textContent = pk.slice(0,6) + '…' + pk.slice(-4);
+    document.getElementById('wallet-chip').style.display = 'flex';
+    document.getElementById('header-connect-btn').textContent = 'Connected ✓';
+    document.getElementById('header-connect-btn').disabled = true;
+    document.getElementById('w-disconnected').style.display = 'none';
+    document.getElementById('w-addr').textContent = pk.slice(0,8) + '…' + pk.slice(-6);
+    document.getElementById('w-connected').style.display = 'block';
+    setTracker(1);
+    log('success', 'Wallet connected: ' + pk);
+  } catch (e) {
+    showConnectError('Error: ' + e.message);
+  }
+}
+
+// Signing uses window.freighter directly (always available after connection)
+async function signTx(xdr) {
+  // Try freighter-api first, fall back to window.freighter
+  try {
+    const fapi = await import('https://esm.sh/@stellar/freighter-api@2');
+    return await fapi.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+  } catch (_) {
+    return await window.freighter.signTransaction(xdr, { networkPassphrase: NETWORK_PASS });
+  }
+}
 
 function showConnectError(msg) {
   const el = document.getElementById('connect-error');
@@ -1186,7 +1236,7 @@ async function invoke(method, args, btnId) {
     let prep = StellarSdk.SorobanRpc.assembleTransaction(tx, sim);
     if (typeof prep.build === 'function') prep = prep.build();
 
-    const signedXDR = await window.freighter.signTransaction(prep.toXDR(), { networkPassphrase: NETWORK_PASS });
+    const signedXDR = await signTx(prep.toXDR());
     const signedTx  = StellarSdk.TransactionBuilder.fromXDR(signedXDR, NETWORK_PASS);
     const sent      = await server.sendTransaction(signedTx);
 
