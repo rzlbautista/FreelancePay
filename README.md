@@ -4,6 +4,8 @@
 
 Built on **Soroban** smart contracts for the Stellar Bootcamp hackathon.
 
+🌐 **Live Demo:** [https://freelance-pay-delta.vercel.app/](https://freelance-pay-delta.vercel.app/)
+
 ---
 
 ## The Problem
@@ -205,6 +207,16 @@ CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6
 ```
 
 **Stellar Expert:** https://stellar.expert/explorer/testnet/contract/CCEFVQCGSCUVXO5IPTRLVNSLQCR2FXAJTMUMAGFRBMQCB3VKLH46BUP6
+
+---
+
+## Screenshots
+
+### cargo test — 9/9 Passing
+![cargo test results](cargo-test.png)
+
+### Deployed Contract on Stellar Expert
+![Stellar Expert contract page](stellar-expert.png)
 
 ---
 
